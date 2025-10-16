@@ -1,79 +1,30 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '../firebase'
-import { addRunForUser, deleteRun, listRunsForUser } from '../services/runsApi'
+import { saveRunLocal, getRunsLocal, deleteRunLocal } from '../services/localStorageApi'
 import UploadPanel from '../components/UploadPanel'
-import { demoRuns } from '../data/demoData'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 export default function ChartsDashboard() {
-  const [user, setUser] = useState(null)
   const [runs, setRuns] = useState([])
   const [loading, setLoading] = useState(true)
-  const [demoMode, setDemoMode] = useState(false)
-  const navigate = useNavigate()
 
   useEffect(() => {
-    // Check if we're in demo mode
-    const isDemoMode = !import.meta.env.VITE_FIREBASE_API_KEY || 
-                      import.meta.env.VITE_DEMO_MODE === 'true'
-    
-    if (isDemoMode) {
-      setDemoMode(true)
-      setUser({ uid: 'demo-user', email: 'demo@runningmetrics.com' })
-      setRuns(demoRuns)
-      setLoading(false)
-      return
-    }
-
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u)
-      if (!u) {
-        navigate('/login')
-      }
-    })
-    return () => unsub()
-  }, [navigate])
-
-  useEffect(() => {
-    async function load() {
-      if (!user || demoMode) return
+    // Load runs from localStorage on component mount
+    const loadRuns = () => {
       setLoading(true)
-      const data = await listRunsForUser(user.uid)
+      const data = getRunsLocal()
       setRuns(data)
       setLoading(false)
     }
-    load()
-  }, [user, demoMode])
+    loadRuns()
+  }, [])
 
-  async function handleSave(summary) {
-    if (demoMode) {
-      // In demo mode, just add to local state
-      const newRun = {
-        id: `demo-${Date.now()}`,
-        distance: summary.distanceMeters,
-        time: summary.durationSec,
-        pace: summary.paceMinPerKm,
-        elevation: summary.elevationGain,
-        date: summary.date,
-      }
-      setRuns((prev) => [...prev, newRun])
-      return
-    }
-    
-    const saved = await addRunForUser(user.uid, summary)
+  function handleSave(summary) {
+    const saved = saveRunLocal(summary)
     setRuns((prev) => [...prev, saved])
   }
 
-  async function handleDelete(id) {
-    if (demoMode) {
-      // In demo mode, just remove from local state
-      setRuns((prev) => prev.filter(r => r.id !== id))
-      return
-    }
-    
-    await deleteRun(user.uid, id)
+  function handleDelete(id) {
+    deleteRunLocal(id)
     setRuns((prev) => prev.filter(r => r.id !== id))
   }
 
@@ -102,18 +53,6 @@ export default function ChartsDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6 space-y-6 max-w-7xl mx-auto">
-        {demoMode && (
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg shadow-lg fade-in">
-            <div className="flex items-center gap-3">
-              <div className="text-2xl">🎯</div>
-              <div>
-                <h3 className="font-bold text-lg">Demo Mode Active</h3>
-                <p className="text-blue-100">You're viewing the app with sample data. Upload your own GPX files to see your real running metrics!</p>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="fade-in">
           <UploadPanel onSave={handleSave} />
         </div>

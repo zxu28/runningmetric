@@ -1,20 +1,20 @@
-# 🏃‍♂️ RunningMetrics - Live Demo
+# 🏃‍♂️ RunningMetrics
 
 A modern React web application for analyzing running data from GPX files. Upload your running data and visualize your performance with beautiful charts and statistics.
 
-## 🚀 Live Demo
+## 🚀 Live App
 
-**👉 [View Live Demo](https://your-username.github.io/runningmetrics/)**
+**👉 [View Live App](https://zxu28.github.io/runningmetric/)**
 
-The live demo showcases the app with sample data, allowing you to explore all features without authentication.
+Upload your GPX files and analyze your running data with privacy-first local storage.
 
 ## ✨ Features
 
 - **📁 GPX File Upload**: Upload GPX files from any running app (Strava, Garmin, etc.)
 - **📊 Interactive Charts**: Visualize pace, distance, elevation, and weekly mileage
 - **📈 Running Statistics**: Track total runs, distance, average pace, and elevation gain
-- **🎯 Demo Mode**: Explore the app with sample data
-- **🔐 User Authentication**: Firebase authentication with Google sign-in
+- **🔒 Privacy-First**: Your data stays in your browser - no cloud storage required
+- **💾 Local Storage**: Data persists across sessions on your device
 - **📱 Responsive Design**: Works perfectly on desktop and mobile devices
 - **🎨 Modern UI**: Beautiful, intuitive interface with smooth animations
 
@@ -22,10 +22,10 @@ The live demo showcases the app with sample data, allowing you to explore all fe
 
 - **Frontend**: React 19, Vite, Tailwind CSS
 - **Charts**: Recharts
-- **Authentication**: Firebase Auth
-- **Database**: Firebase Firestore
+- **Storage**: Browser localStorage (privacy-first)
 - **GPX Parsing**: gpxparser
 - **Deployment**: GitHub Pages
+- **Future**: Firebase integration available for cloud sync
 
 ## 🚀 Quick Start
 
@@ -47,39 +47,22 @@ The live demo showcases the app with sample data, allowing you to explore all fe
    npm install
    ```
 
-3. **Set up Firebase (Optional)**
-   
-   For full functionality, set up a Firebase project:
-   
-   - Create a new Firebase project at [Firebase Console](https://console.firebase.google.com/)
-   - Enable Authentication (Email/Password and Google)
-   - Create a Firestore database
-   - Copy your Firebase config to `.env.local`:
-   ```env
-   VITE_FIREBASE_API_KEY=your_api_key
-   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-   VITE_FIREBASE_PROJECT_ID=your_project_id
-   VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-   VITE_FIREBASE_APP_ID=your_app_id
-   ```
-
-4. **Run the development server**
+3. **Run the development server**
    ```bash
    npm run dev
    ```
 
-5. **Open your browser**
+4. **Open your browser**
    Navigate to `http://localhost:5173`
 
-## 🎯 Demo Mode
+## 🔒 Privacy & Data Storage
 
-The app automatically runs in demo mode when no Firebase configuration is provided. Demo mode includes:
+The app uses browser localStorage to store your running data:
 
-- Sample running data (5 runs with realistic metrics)
-- All chart visualizations
-- GPX file upload functionality (saves locally)
-- No authentication required
+- **No cloud storage**: Your data never leaves your device
+- **Persistent**: Data survives browser restarts and page refreshes
+- **Private**: No tracking, no analytics, no data collection
+- **Portable**: Data is stored locally and can be exported if needed
 
 ## 📊 Supported GPX Data
 
@@ -109,22 +92,30 @@ npm run build
 
 The built files will be in the `dist` directory.
 
+### Firebase Integration (Optional)
+
+For future cloud sync capabilities, you can set up Firebase:
+
+1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
+2. Enable Authentication and Firestore
+3. Add your Firebase config to `.env.local`
+4. The app will automatically use Firebase for data persistence when configured
+
 ## 📁 Project Structure
 
 ```
 src/
 ├── components/          # Reusable UI components
 │   └── UploadPanel.jsx  # GPX file upload component
-├── data/               # Demo data and sample files
-│   └── demoData.js     # Sample running data
 ├── hooks/              # Custom React hooks
 │   └── useParseGpx.js  # GPX parsing logic
 ├── pages/              # Page components
 │   └── ChartsDashboard.jsx # Main dashboard
 ├── services/           # API and external services
-│   └── runsApi.js      # Firebase operations
+│   ├── localStorageApi.js # Local storage operations
+│   └── runsApi.js      # Firebase operations (future)
 ├── App.jsx             # Main app component
-└── firebase.js         # Firebase configuration
+└── firebase.js         # Firebase configuration (future)
 ```
 
 ## 🤝 Contributing
