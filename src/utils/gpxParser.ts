@@ -1,5 +1,11 @@
 // GPX Parser utility functions
 
+// Pause detection threshold - time gaps larger than this are considered pauses
+const PAUSE_THRESHOLD_SECONDS = 20
+
+// Maximum reasonable speed (m/s) - speeds above this indicate GPS errors
+const MAX_SPEED_MPS = 10 // ~36 km/h or ~22 mph
+
 export interface GPXPoint {
   lat: number
   lon: number
@@ -67,13 +73,35 @@ function calculateMileSplits(tracks: GPXTrack[]): MileSplit[] {
   
   let currentMile = 1
   let accumulatedDistance = 0
+  let accumulatedMovingTime = 0  // NEW: Track only moving time
   let splitStartIndex = 0
   let splitElevationGain = 0
   let splitElevationLoss = 0
   
   for (let i = 1; i < allPoints.length; i++) {
+    const timeDelta = (allPoints[i].time.getTime() - allPoints[i - 1].time.getTime()) / 1000
+    
+    // Skip this segment if it's a pause (time gap too large)
+    if (timeDelta > PAUSE_THRESHOLD_SECONDS) {
+      // This is a pause - don't count distance or time
+      // But update the split start index so next segment starts fresh
+      if (accumulatedDistance === 0) {
+        splitStartIndex = i
+      }
+      continue
+    }
+    
     const distance = haversineDistance(allPoints[i - 1], allPoints[i])
+    
+    // Skip if speed is unrealistic (GPS error)
+    const speed = timeDelta > 0 ? distance / timeDelta : 0
+    if (speed > MAX_SPEED_MPS) {
+      continue
+    }
+    
+    // Accumulate distance and moving time
     accumulatedDistance += distance
+    accumulatedMovingTime += timeDelta  // NEW: Only count moving time
     
     // Calculate elevation change
     const elevationDiff = allPoints[i].elevation - allPoints[i - 1].elevation
@@ -85,27 +113,25 @@ function calculateMileSplits(tracks: GPXTrack[]): MileSplit[] {
     
     // Check if we've completed a mile
     if (accumulatedDistance >= MILE_IN_METERS) {
-      const splitStartTime = allPoints[splitStartIndex].time
-      const splitEndTime = allPoints[i].time
-      const splitDuration = (splitEndTime.getTime() - splitStartTime.getTime()) / 1000 // seconds
       const splitDistanceMiles = accumulatedDistance / MILE_IN_METERS
-      const pace = splitDistanceMiles > 0 ? (splitDuration / 60) / splitDistanceMiles : 0
+      const pace = splitDistanceMiles > 0 ? (accumulatedMovingTime / 60) / splitDistanceMiles : 0
       
       splits.push({
         mile: currentMile,
         pace: pace,
-        duration: splitDuration,
+        duration: accumulatedMovingTime,  // Use moving time, not elapsed
         elevationGain: splitElevationGain,
         elevationLoss: splitElevationLoss,
         startDistance: (currentMile - 1) * MILE_IN_METERS,
         endDistance: currentMile * MILE_IN_METERS,
-        startTime: splitStartTime,
-        endTime: splitEndTime
+        startTime: allPoints[splitStartIndex].time,
+        endTime: allPoints[i].time
       })
       
       // Reset for next mile
       currentMile++
       accumulatedDistance = 0
+      accumulatedMovingTime = 0  // NEW: Reset moving time
       splitStartIndex = i
       splitElevationGain = 0
       splitElevationLoss = 0
@@ -114,22 +140,19 @@ function calculateMileSplits(tracks: GPXTrack[]): MileSplit[] {
   
   // Handle partial final mile if exists
   if (accumulatedDistance > 0 && splits.length > 0) {
-    const splitStartTime = allPoints[splitStartIndex].time
-    const splitEndTime = allPoints[allPoints.length - 1].time
-    const splitDuration = (splitEndTime.getTime() - splitStartTime.getTime()) / 1000
     const splitDistanceMiles = accumulatedDistance / MILE_IN_METERS
-    const pace = splitDistanceMiles > 0 ? (splitDuration / 60) / splitDistanceMiles : 0
+    const pace = splitDistanceMiles > 0 ? (accumulatedMovingTime / 60) / splitDistanceMiles : 0
     
     splits.push({
       mile: currentMile,
       pace: pace,
-      duration: splitDuration,
+      duration: accumulatedMovingTime,
       elevationGain: splitElevationGain,
       elevationLoss: splitElevationLoss,
       startDistance: (currentMile - 1) * MILE_IN_METERS,
       endDistance: (currentMile - 1) * MILE_IN_METERS + accumulatedDistance,
-      startTime: splitStartTime,
-      endTime: splitEndTime
+      startTime: allPoints[splitStartIndex].time,
+      endTime: allPoints[allPoints.length - 1].time
     })
   }
   
@@ -210,7 +233,29 @@ export const parseGPX = (gpxText: string): GPXData | null => {
     
     const startTime = allPoints[0]?.time || new Date()
     const endTime = allPoints[allPoints.length - 1]?.time || new Date()
-    const totalDuration = (endTime.getTime() - startTime.getTime()) / 1000 // in seconds
+    
+    // Calculate total moving time (excluding pauses)
+    let totalMovingTime = 0
+    for (let i = 1; i < allPoints.length; i++) {
+      const timeDelta = (allPoints[i].time.getTime() - allPoints[i - 1].time.getTime()) / 1000
+      
+      // Skip pauses
+      if (timeDelta > PAUSE_THRESHOLD_SECONDS) {
+        continue
+      }
+      
+      const distance = haversineDistance(allPoints[i - 1], allPoints[i])
+      const speed = timeDelta > 0 ? distance / timeDelta : 0
+      
+      // Skip unrealistic speeds
+      if (speed > MAX_SPEED_MPS) {
+        continue
+      }
+      
+      totalMovingTime += timeDelta
+    }
+    
+    const totalDuration = totalMovingTime // Use moving time instead of elapsed time
     
     // Calculate average pace (minutes per mile)
     const distanceMiles = totalDistance / 1609.34 // Convert meters to miles
