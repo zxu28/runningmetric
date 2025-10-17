@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { useDataContext } from '../contexts/DataContext'
-import { formatDistance, formatDuration, formatPace } from '../utils/gpxParser'
+import { formatDistance, formatPace } from '../utils/gpxParser'
 
 const Analysis = () => {
   const { parsedData } = useDataContext()
@@ -8,7 +8,6 @@ const Analysis = () => {
   // Calculate summary statistics
   const totalRuns = parsedData.length
   const totalDistance = parsedData.reduce((sum, run) => sum + run.totalDistance, 0)
-  const totalDuration = parsedData.reduce((sum, run) => sum + run.totalDuration, 0)
   const totalElevation = parsedData.reduce((sum, run) => sum + run.elevationGain, 0)
   const avgPace = totalRuns > 0 ? parsedData.reduce((sum, run) => sum + run.avgPace, 0) / totalRuns : 0
 
@@ -43,9 +42,6 @@ const Analysis = () => {
         </div>
       </div>
     )
-  }
-}
-
   }
 
   return (
