@@ -16,7 +16,7 @@ A modern, privacy-first web application for analyzing running data from GPX file
 - ** Modern UI**: Responsive design with smooth animations
 - ** Visualizations**: Summary stats, recent runs, and performance charts
 
-##  Live Demo
+##  Live Website
 
 **[https://zxu28.github.io/runningmetric/](https://zxu28.github.io/runningmetric/)**
 
@@ -27,6 +27,24 @@ A modern, privacy-first web application for analyzing running data from GPX file
 - **Styling**: Tailwind CSS
 - **Animations**: Framer Motion
 - **Deployment**: GitHub Pages
+
+## 📁 Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   └── Navbar.tsx      # Navigation component
+├── contexts/           # React context providers
+│   └── DataContext.tsx # Global state management
+├── pages/              # Main application pages
+│   ├── Home.tsx        # Landing page
+│   ├── Upload.tsx      # File upload interface
+│   └── Analysis.tsx    # Data analysis dashboard
+├── utils/              # Utility functions
+│   └── gpxParser.ts    # GPX parsing and calculations
+├── App.tsx             # Main application component
+└── main.tsx            # Application entry point
+```
 
 ## 🏃‍♂️ Quick Start
 
