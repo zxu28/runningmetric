@@ -114,9 +114,9 @@ export const parseGPX = (gpxText: string): GPXData | null => {
     const endTime = allPoints[allPoints.length - 1]?.time || new Date()
     const totalDuration = (endTime.getTime() - startTime.getTime()) / 1000 // in seconds
     
-    // Calculate average pace (minutes per kilometer)
-    const distanceKm = totalDistance / 1000
-    const avgPace = distanceKm > 0 ? (totalDuration / 60) / distanceKm : 0
+    // Calculate average pace (minutes per mile)
+    const distanceMiles = totalDistance / 1609.34 // Convert meters to miles
+    const avgPace = distanceMiles > 0 ? (totalDuration / 60) / distanceMiles : 0
 
     return {
       fileName: '', // Will be set by the caller
@@ -168,7 +168,7 @@ export const formatPace = (paceInMinutes: number): string => {
 }
 
 export const formatDistance = (distanceInMeters: number): string => {
-  return `${(distanceInMeters / 1000).toFixed(2)} km`
+  return `${(distanceInMeters / 1609.34).toFixed(2)} mi`
 }
 
 export const formatDuration = (durationInSeconds: number): string => {

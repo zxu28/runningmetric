@@ -69,7 +69,7 @@ const Analysis = () => {
                 </div>
                 <div className="bg-purple-50 rounded-lg p-4">
                   <div className="text-2xl font-bold text-purple-600">{formatPace(avgPace)}</div>
-                  <div className="text-sm text-purple-600">Avg Pace</div>
+                  <div className="text-sm text-purple-600">Avg Pace (per mi)</div>
                 </div>
                 <div className="bg-orange-50 rounded-lg p-4">
                   <div className="text-2xl font-bold text-orange-600">{totalElevation.toFixed(0)}m</div>
