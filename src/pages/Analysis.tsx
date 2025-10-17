@@ -2,13 +2,20 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useDataContext } from '../contexts/DataContext'
-import { formatDistance, formatPace } from '../utils/gpxParser'
+import { formatDistance, formatPace, GPXData } from '../utils/gpxParser'
+import { getMostRecentRun } from '../utils/runHelpers'
 import PacePerMileChart from '../components/PacePerMileChart'
 import RightChartsPanel from '../components/RightChartsPanel'
+import RunCalendar from '../components/RunCalendar'
+import RunMap from '../components/RunMap'
+import RunDetails from '../components/RunDetails'
 
 const Analysis = () => {
   const { parsedData } = useDataContext()
   const [expandedRuns, setExpandedRuns] = useState<Set<number>>(new Set())
+  const [selectedRun, setSelectedRun] = useState<GPXData | null>(
+    parsedData.length > 0 ? getMostRecentRun(parsedData) : null
+  )
 
   // Calculate summary statistics
   const totalRuns = parsedData.length
@@ -24,6 +31,10 @@ const Analysis = () => {
       newExpanded.add(index)
     }
     setExpandedRuns(newExpanded)
+  }
+
+  const handleSelectRun = (run: GPXData) => {
+    setSelectedRun(run)
   }
 
   // If no data, show error message
@@ -91,6 +102,34 @@ const Analysis = () => {
               </div>
             </div>
           </div>
+
+          {/* Calendar & Map Section */}
+          {parsedData.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Calendar & Map View</h2>
+              
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Left: Calendar */}
+                <div>
+                  <RunCalendar 
+                    runs={parsedData} 
+                    selectedRun={selectedRun}
+                    onSelectRun={handleSelectRun} 
+                  />
+                </div>
+                
+                {/* Right: Map and Details */}
+                <div className="space-y-4">
+                  {selectedRun && (
+                    <>
+                      <RunDetails run={selectedRun} />
+                      <RunMap run={selectedRun} />
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Individual Run Sections */}
           <div className="space-y-6">
