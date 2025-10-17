@@ -20,7 +20,9 @@ export default function ChartsDashboard() {
 
   function handleSave(summary) {
     const saved = saveRunLocal(summary)
-    setRuns((prev) => [...prev, saved])
+    if (saved) {
+      setRuns((prev) => [...prev, saved])
+    }
   }
 
   function handleDelete(id) {

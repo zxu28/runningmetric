@@ -25,10 +25,14 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - name: Install
+      - name: Install dependencies
         run: npm ci
       - name: Build
         run: npm run build
+      - name: Verify build
+        run: |
+          ls -la dist/
+          echo "Build completed successfully"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
