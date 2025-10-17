@@ -4,11 +4,16 @@ import { Link } from 'react-router-dom'
 import { useDataContext } from '../contexts/DataContext'
 import { formatDistance, formatPace, GPXData } from '../utils/gpxParser'
 import { getMostRecentRun } from '../utils/runHelpers'
+import { useBestEfforts } from '../hooks/useBestEfforts'
 import PacePerMileChart from '../components/PacePerMileChart'
 import RightChartsPanel from '../components/RightChartsPanel'
 import RunCalendar from '../components/RunCalendar'
 import RunMap from '../components/RunMap'
 import RunDetails from '../components/RunDetails'
+import BestEffortsGrid from '../components/BestEffortsGrid'
+import PRBadge from '../components/PRBadge'
+import StatsOverview from '../components/StatsOverview'
+import RunComparison from '../components/RunComparison'
 
 const Analysis = () => {
   const { parsedData } = useDataContext()
@@ -16,6 +21,10 @@ const Analysis = () => {
   const [selectedRun, setSelectedRun] = useState<GPXData | null>(
     parsedData.length > 0 ? getMostRecentRun(parsedData) : null
   )
+  const [showComparison, setShowComparison] = useState(false)
+  
+  // Use best efforts hook
+  const { bestEfforts, newPRs, clearNewPRs } = useBestEfforts(parsedData)
 
   // Calculate summary statistics
   const totalRuns = parsedData.length
@@ -79,6 +88,15 @@ const Analysis = () => {
           transition={{ duration: 0.6 }}
         >
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Running Analysis</h1>
+          
+          {/* PR Badge Notification */}
+          <PRBadge prTypes={newPRs} onDismiss={clearNewPRs} />
+          
+          {/* Best Efforts Grid */}
+          <BestEffortsGrid bestEfforts={bestEfforts} />
+          
+          {/* Stats Overview / Trend Charts */}
+          <StatsOverview runs={parsedData} />
           
           {/* Summary Cards */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -221,6 +239,33 @@ const Analysis = () => {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Floating Compare Button */}
+      {parsedData.length >= 2 && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setShowComparison(true)}
+          className="fixed bottom-8 right-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full p-4 shadow-2xl hover:shadow-3xl transition-shadow z-40"
+          title="Compare Runs"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </motion.button>
+      )}
+
+      {/* Run Comparison Modal */}
+      <AnimatePresence>
+        {showComparison && (
+          <RunComparison 
+            runs={parsedData} 
+            onClose={() => setShowComparison(false)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

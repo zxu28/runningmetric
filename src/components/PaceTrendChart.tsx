@@ -1,0 +1,91 @@
+import React from 'react'
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, AreaChart } from 'recharts'
+import { motion } from 'framer-motion'
+import { PeriodStats } from '../utils/trendAnalysis'
+import { formatPace } from '../utils/gpxParser'
+
+interface PaceTrendChartProps {
+  data: PeriodStats[]
+}
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-3 rounded-lg shadow-lg border border-gray-200 text-sm"
+      >
+        <p className="font-semibold mb-1">{data.period}</p>
+        <p className="text-green-600">
+          Avg Pace: <span className="font-medium">{formatPace(data.avgPace)} /mi</span>
+        </p>
+        <p className="text-gray-600">
+          Runs: <span className="font-medium">{data.runCount}</span>
+        </p>
+      </motion.div>
+    )
+  }
+  return null
+}
+
+const PaceTrendChart: React.FC<PaceTrendChartProps> = ({ data }) => {
+  // Transform data for chart
+  const chartData = data.map(period => ({
+    period: period.period,
+    avgPace: period.averagePace,
+    runCount: period.runCount
+  }))
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.1 }}
+      className="bg-gray-50 rounded-lg p-4 h-80 flex flex-col"
+    >
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">Average Pace</h3>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <defs>
+            <linearGradient id="paceGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+              <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" vertical={false} />
+          <XAxis
+            dataKey="period"
+            tick={{ fill: '#6b7280', fontSize: 11 }}
+            tickLine={false}
+            axisLine={{ stroke: '#e0e0e0' }}
+            angle={-45}
+            textAnchor="end"
+            height={80}
+          />
+          <YAxis
+            label={{ value: 'Pace (min/mi)', angle: -90, position: 'insideLeft', fill: '#6b7280' }}
+            tickFormatter={(value) => formatPace(value)}
+            tick={{ fill: '#6b7280', fontSize: 12 }}
+            tickLine={false}
+            axisLine={{ stroke: '#e0e0e0' }}
+            domain={['auto', 'auto']}
+            reversed={true} // Lower pace is better, so reverse Y-axis
+          />
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#10b981', strokeWidth: 2 }} />
+          <Area
+            type="monotone"
+            dataKey="avgPace"
+            stroke="#10b981"
+            strokeWidth={3}
+            fill="url(#paceGradient)"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </motion.div>
+  )
+}
+
+export default PaceTrendChart
+
