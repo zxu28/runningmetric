@@ -1,16 +1,30 @@
-import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useDataContext } from '../contexts/DataContext'
 import { formatDistance, formatPace } from '../utils/gpxParser'
+import PacePerMileChart from '../components/PacePerMileChart'
+import RightChartsPanel from '../components/RightChartsPanel'
 
 const Analysis = () => {
   const { parsedData } = useDataContext()
+  const [expandedRuns, setExpandedRuns] = useState<Set<number>>(new Set())
 
   // Calculate summary statistics
   const totalRuns = parsedData.length
   const totalDistance = parsedData.reduce((sum, run) => sum + run.totalDistance, 0)
   const totalElevation = parsedData.reduce((sum, run) => sum + run.elevationGain, 0)
   const avgPace = totalRuns > 0 ? parsedData.reduce((sum, run) => sum + run.avgPace, 0) / totalRuns : 0
+
+  const toggleRun = (index: number) => {
+    const newExpanded = new Set(expandedRuns)
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index)
+    } else {
+      newExpanded.add(index)
+    }
+    setExpandedRuns(newExpanded)
+  }
 
   // If no data, show error message
   if (parsedData.length === 0) {
@@ -55,62 +69,90 @@ const Analysis = () => {
         >
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Running Analysis</h1>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Summary Cards */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Summary</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-blue-600">{totalRuns}</div>
-                  <div className="text-sm text-blue-600">Total Runs</div>
-                </div>
-                <div className="bg-green-50 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-green-600">{formatDistance(totalDistance)}</div>
-                  <div className="text-sm text-green-600">Total Distance</div>
-                </div>
-                <div className="bg-purple-50 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-purple-600">{formatPace(avgPace)}</div>
-                  <div className="text-sm text-purple-600">Avg Pace (per mi)</div>
-                </div>
-                <div className="bg-orange-50 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-orange-600">{totalElevation.toFixed(0)}m</div>
-                  <div className="text-sm text-orange-600">Elevation</div>
-                </div>
+          {/* Summary Cards */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Summary</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-blue-50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-blue-600">{totalRuns}</div>
+                <div className="text-sm text-blue-600">Total Runs</div>
+              </div>
+              <div className="bg-green-50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-green-600">{formatDistance(totalDistance)}</div>
+                <div className="text-sm text-green-600">Total Distance</div>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-purple-600">{formatPace(avgPace)}</div>
+                <div className="text-sm text-purple-600">Avg Pace (per mi)</div>
+              </div>
+              <div className="bg-orange-50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-orange-600">{totalElevation.toFixed(0)}m</div>
+                <div className="text-sm text-orange-600">Elevation</div>
               </div>
             </div>
+          </div>
 
-            {/* Recent Runs */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Runs</h2>
-              <div className="space-y-3 max-h-64 overflow-y-auto">
-                {parsedData.slice(0, 5).map((run, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium text-gray-900">{run.fileName}</h4>
-                        <p className="text-sm text-gray-600">{run.startTime.toLocaleDateString()}</p>
-                      </div>
+          {/* Individual Run Sections */}
+          <div className="space-y-6">
+            {parsedData.map((run, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                className="border rounded-lg bg-white shadow-md overflow-hidden"
+              >
+                {/* Header - always visible */}
+                <div 
+                  onClick={() => toggleRun(index)} 
+                  className="cursor-pointer p-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Run {index + 1}: {run.fileName}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {run.startTime.toLocaleDateString()} • {run.splits.length} mile{run.splits.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-4">
                       <div className="text-right text-sm">
                         <div className="font-medium text-gray-900">{formatDistance(run.totalDistance)}</div>
                         <div className="text-gray-600">{formatPace(run.avgPace)}</div>
                       </div>
+                      <motion.div
+                        animate={{ rotate: expandedRuns.has(index) ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-gray-400"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </motion.div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Charts Placeholder */}
-            <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Performance Charts</h2>
-              <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <div className="text-4xl mb-2">📈</div>
-                  <p>Charts will appear here once you upload more GPX files</p>
-                  <p className="text-sm">Currently showing {totalRuns} run{totalRuns !== 1 ? 's' : ''}</p>
                 </div>
-              </div>
-            </div>
+                
+                {/* Expanded content */}
+                <AnimatePresence>
+                  {expandedRuns.has(index) && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="border-t"
+                    >
+                      <div className="p-6 grid md:grid-cols-2 gap-6">
+                        <PacePerMileChart data={run.splits} />
+                        <RightChartsPanel run={run} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ))}
           </div>
 
           {/* Call to Action */}

@@ -12,6 +12,18 @@ export interface GPXTrack {
   points: GPXPoint[]
 }
 
+export interface MileSplit {
+  mile: number;              // Mile number (1, 2, 3...)
+  pace: number;              // Minutes per mile
+  duration: number;          // Duration for this split in seconds
+  elevationGain: number;     // Elevation gain in meters
+  elevationLoss: number;     // Elevation loss in meters
+  startDistance: number;     // Starting distance in meters
+  endDistance: number;       // Ending distance in meters
+  startTime: Date;           // Split start time
+  endTime: Date;             // Split end time
+}
+
 export interface GPXData {
   fileName: string
   tracks: GPXTrack[]
@@ -21,6 +33,7 @@ export interface GPXData {
   startTime: Date
   endTime: Date
   avgPace: number
+  splits: MileSplit[];       // NEW: Per-mile split data
 }
 
 // Haversine formula to calculate distance between two points
@@ -36,6 +49,91 @@ function haversineDistance(point1: GPXPoint, point2: GPXPoint): number {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 
   return R * c
+}
+
+// Calculate per-mile splits from track points
+function calculateMileSplits(tracks: GPXTrack[]): MileSplit[] {
+  const splits: MileSplit[] = []
+  const MILE_IN_METERS = 1609.34
+  
+  // Combine all track points and sort by time
+  let allPoints: GPXPoint[] = []
+  tracks.forEach(track => {
+    allPoints = allPoints.concat(track.points)
+  })
+  allPoints.sort((a, b) => a.time.getTime() - b.time.getTime())
+  
+  if (allPoints.length < 2) return splits
+  
+  let currentMile = 1
+  let accumulatedDistance = 0
+  let splitStartIndex = 0
+  let splitElevationGain = 0
+  let splitElevationLoss = 0
+  
+  for (let i = 1; i < allPoints.length; i++) {
+    const distance = haversineDistance(allPoints[i - 1], allPoints[i])
+    accumulatedDistance += distance
+    
+    // Calculate elevation change
+    const elevationDiff = allPoints[i].elevation - allPoints[i - 1].elevation
+    if (elevationDiff > 0) {
+      splitElevationGain += elevationDiff
+    } else {
+      splitElevationLoss += Math.abs(elevationDiff)
+    }
+    
+    // Check if we've completed a mile
+    if (accumulatedDistance >= MILE_IN_METERS) {
+      const splitStartTime = allPoints[splitStartIndex].time
+      const splitEndTime = allPoints[i].time
+      const splitDuration = (splitEndTime.getTime() - splitStartTime.getTime()) / 1000 // seconds
+      const splitDistanceMiles = accumulatedDistance / MILE_IN_METERS
+      const pace = splitDistanceMiles > 0 ? (splitDuration / 60) / splitDistanceMiles : 0
+      
+      splits.push({
+        mile: currentMile,
+        pace: pace,
+        duration: splitDuration,
+        elevationGain: splitElevationGain,
+        elevationLoss: splitElevationLoss,
+        startDistance: (currentMile - 1) * MILE_IN_METERS,
+        endDistance: currentMile * MILE_IN_METERS,
+        startTime: splitStartTime,
+        endTime: splitEndTime
+      })
+      
+      // Reset for next mile
+      currentMile++
+      accumulatedDistance = 0
+      splitStartIndex = i
+      splitElevationGain = 0
+      splitElevationLoss = 0
+    }
+  }
+  
+  // Handle partial final mile if exists
+  if (accumulatedDistance > 0 && splits.length > 0) {
+    const splitStartTime = allPoints[splitStartIndex].time
+    const splitEndTime = allPoints[allPoints.length - 1].time
+    const splitDuration = (splitEndTime.getTime() - splitStartTime.getTime()) / 1000
+    const splitDistanceMiles = accumulatedDistance / MILE_IN_METERS
+    const pace = splitDistanceMiles > 0 ? (splitDuration / 60) / splitDistanceMiles : 0
+    
+    splits.push({
+      mile: currentMile,
+      pace: pace,
+      duration: splitDuration,
+      elevationGain: splitElevationGain,
+      elevationLoss: splitElevationLoss,
+      startDistance: (currentMile - 1) * MILE_IN_METERS,
+      endDistance: (currentMile - 1) * MILE_IN_METERS + accumulatedDistance,
+      startTime: splitStartTime,
+      endTime: splitEndTime
+    })
+  }
+  
+  return splits
 }
 
 // Parse GPX XML text and extract track points
@@ -118,6 +216,9 @@ export const parseGPX = (gpxText: string): GPXData | null => {
     const distanceMiles = totalDistance / 1609.34 // Convert meters to miles
     const avgPace = distanceMiles > 0 ? (totalDuration / 60) / distanceMiles : 0
 
+    // Calculate per-mile splits
+    const splits = calculateMileSplits(tracks)
+
     return {
       fileName: '', // Will be set by the caller
       tracks,
@@ -126,7 +227,8 @@ export const parseGPX = (gpxText: string): GPXData | null => {
       elevationGain: totalElevationGain,
       startTime,
       endTime,
-      avgPace
+      avgPace,
+      splits
     }
   } catch (error) {
     console.error('Error parsing GPX:', error)
