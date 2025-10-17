@@ -1,8 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { parseMultipleGPXFiles, formatDistance, formatDuration, formatPace, GPXData } from '../utils/gpxParser'
+import { useDataContext } from '../contexts/DataContext'
 
 const Upload = () => {
+  const navigate = useNavigate()
+  const { addParsedData } = useDataContext()
   const [dragActive, setDragActive] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [parsedData, setParsedData] = useState<GPXData[]>([])
@@ -48,6 +52,9 @@ const Upload = () => {
       const results = await parseMultipleGPXFiles(uploadedFiles)
       setParsedData(results)
       
+      // Save to global context
+      addParsedData(results)
+      
       // Log results to console as requested
       console.log('Parsed GPX Files:', results)
       results.forEach((data, index) => {
@@ -61,6 +68,9 @@ const Upload = () => {
         console.log(`  Tracks: ${data.tracks.length}`)
         console.log('---')
       })
+      
+      // Navigate to analysis page after parsing completes
+      navigate('/analysis')
     } catch (error) {
       console.error('Error parsing files:', error)
     } finally {
@@ -218,12 +228,9 @@ const Upload = () => {
                   <p className="text-sm text-gray-600 mb-4">
                     Check the browser console for detailed parsing results
                   </p>
-                  <button className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                    View Analysis
-                    <svg className="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
+                  <p className="text-sm text-green-600 mb-4">
+                    ✅ Files parsed successfully! Redirecting to analysis...
+                  </p>
                 </div>
               </motion.div>
             )}
