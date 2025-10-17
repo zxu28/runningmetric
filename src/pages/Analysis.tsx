@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { useDataContext } from '../contexts/DataContext'
 import { formatDistance, formatPace } from '../utils/gpxParser'
 
@@ -28,15 +29,15 @@ const Analysis = () => {
               <p className="text-red-600 mb-6">
                 You haven't uploaded any GPX files yet. Please upload some running data to view your analysis.
               </p>
-              <a
-                href="/upload"
+              <Link
+                to="/upload"
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
               >
                 Upload GPX Files
                 <svg className="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
-              </a>
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -126,15 +127,15 @@ const Analysis = () => {
               <p className="text-blue-700 mb-4">
                 Add more GPX files to get deeper insights and better analysis.
               </p>
-              <a
-                href="/upload"
+              <Link
+                to="/upload"
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
                 Upload More Files
                 <svg className="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
-              </a>
+              </Link>
             </div>
           </motion.div>
         </motion.div>
