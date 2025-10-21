@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { parseMultipleGPXFiles, formatDistance, formatDuration, formatPace, GPXData } from '../utils/gpxParser'
 import { useDataContext } from '../contexts/DataContext'
+import StravaConnectButton from '../components/StravaConnectButton'
+import { stravaService } from '../services/stravaService'
 
 const Upload = () => {
   const navigate = useNavigate()
@@ -11,6 +13,18 @@ const Upload = () => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [parsedData, setParsedData] = useState<GPXData[]>([])
   const [isParsing, setIsParsing] = useState(false)
+
+  const handleStravaSync = async () => {
+    try {
+      const activities = await stravaService.fetchActivities({ per_page: 10 })
+      console.log(`Fetched ${activities.length} activities from Strava`)
+      // TODO: Convert Strava activities to GPXData format
+      alert(`Successfully synced ${activities.length} activities from Strava!`)
+    } catch (error) {
+      console.error('Strava sync error:', error)
+      alert('Failed to sync from Strava. Please try again.')
+    }
+  }
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -92,6 +106,21 @@ const Upload = () => {
           transition={{ duration: 0.6 }}
         >
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Upload GPX Files</h1>
+          
+          {/* Strava Connect Section */}
+          <div className="mb-8">
+            <StravaConnectButton onSync={handleStravaSync} />
+          </div>
+
+          {/* Divider */}
+          <div className="relative mb-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-gray-50 text-gray-500 font-medium">OR</span>
+            </div>
+          </div>
           
           <div className="bg-white rounded-lg shadow-md p-8">
             <div

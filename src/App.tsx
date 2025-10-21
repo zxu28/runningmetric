@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Upload from './pages/Upload'
 import Analysis from './pages/Analysis'
+import StravaCallback from './pages/StravaCallback'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/upload" element={<Upload />} />
             <Route path="/analysis" element={<Analysis />} />
+            <Route path="/strava-callback" element={<StravaCallback />} />
           </Routes>
         </main>
       </div>
