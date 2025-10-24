@@ -5,6 +5,16 @@ const STRAVA_CLIENT_SECRET = import.meta.env.VITE_STRAVA_CLIENT_SECRET || ''
 const STRAVA_REDIRECT_URI = import.meta.env.VITE_STRAVA_REDIRECT_URI || 
   `${window.location.origin}/runningmetric/strava-callback`
 
+// Debug log for production (will show in browser console)
+if (typeof window !== 'undefined') {
+  console.log('[Strava] Environment check:', {
+    hasClientId: !!STRAVA_CLIENT_ID,
+    hasClientSecret: !!STRAVA_CLIENT_SECRET,
+    redirectUri: STRAVA_REDIRECT_URI,
+    clientIdLength: STRAVA_CLIENT_ID?.length || 0
+  })
+}
+
 
 const STRAVA_API_BASE = 'https://www.strava.com/api/v3'
 const STRAVA_OAUTH_BASE = 'https://www.strava.com/oauth'
