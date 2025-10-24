@@ -5,6 +5,7 @@ const STRAVA_CLIENT_SECRET = import.meta.env.VITE_STRAVA_CLIENT_SECRET || ''
 const STRAVA_REDIRECT_URI = import.meta.env.VITE_STRAVA_REDIRECT_URI || 
   `${window.location.origin}/runningmetric/strava-callback`
 
+
 const STRAVA_API_BASE = 'https://www.strava.com/api/v3'
 const STRAVA_OAUTH_BASE = 'https://www.strava.com/oauth'
 
@@ -45,6 +46,7 @@ class StravaService {
       `response_type=code&` +
       `approval_prompt=auto&` +
       `scope=${scope}`
+    
     
     window.location.href = authUrl
   }
@@ -211,6 +213,40 @@ class StravaService {
       return await response.json()
     } catch (error) {
       console.error('Fetch streams error:', error)
+      throw error
+    }
+  }
+
+  // Fetch activity with detailed streams
+  async fetchActivityWithStreams(activityId: number): Promise<{
+    activity: StravaActivity
+    streams: any
+  }> {
+    try {
+      const accessToken = await this.getValidAccessToken()
+      
+      // Fetch activity details
+      const activityResponse = await fetch(
+        `${STRAVA_API_BASE}/activities/${activityId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      )
+
+      if (!activityResponse.ok) {
+        throw new Error(`Failed to fetch activity: ${activityResponse.statusText}`)
+      }
+
+      const activity = await activityResponse.json()
+
+      // Fetch streams
+      const streams = await this.fetchActivityStreams(activityId)
+
+      return { activity, streams }
+    } catch (error) {
+      console.error('Fetch activity with streams error:', error)
       throw error
     }
   }

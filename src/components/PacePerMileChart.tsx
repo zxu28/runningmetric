@@ -5,15 +5,28 @@ import { MileSplit, formatPace } from '../utils/gpxParser'
 
 interface PacePerMileChartProps {
   data: MileSplit[]
+  source?: 'gpx' | 'strava'
 }
 
-const PacePerMileChart: React.FC<PacePerMileChartProps> = ({ data }) => {
+const PacePerMileChart: React.FC<PacePerMileChartProps> = ({ data, source }) => {
+  // Debug logging
+  console.log('PacePerMileChart received:', { 
+    dataLength: data?.length || 0, 
+    source, 
+    data: data?.slice(0, 2) // Show first 2 splits for debugging
+  })
+
   if (!data || data.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6 h-64 flex items-center justify-center">
         <div className="text-center text-gray-500">
           <div className="text-4xl mb-2">📊</div>
           <p>No pace data available</p>
+          {source === 'strava' && (
+            <p className="text-sm text-gray-400 mt-2">
+              Strava activities don't have detailed mile splits yet
+            </p>
+          )}
         </div>
       </div>
     )

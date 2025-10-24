@@ -40,6 +40,8 @@ export interface GPXData {
   endTime: Date
   avgPace: number
   splits: MileSplit[];       // NEW: Per-mile split data
+  source?: 'gpx' | 'strava'  // NEW: Track data source
+  stravaId?: number          // NEW: Strava activity ID
 }
 
 // Haversine formula to calculate distance between two points
@@ -58,7 +60,7 @@ function haversineDistance(point1: GPXPoint, point2: GPXPoint): number {
 }
 
 // Calculate per-mile splits from track points
-function calculateMileSplits(tracks: GPXTrack[]): MileSplit[] {
+export function calculateMileSplits(tracks: GPXTrack[]): MileSplit[] {
   const splits: MileSplit[] = []
   const MILE_IN_METERS = 1609.34
   

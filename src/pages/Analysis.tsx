@@ -16,7 +16,7 @@ import StatsOverview from '../components/StatsOverview'
 import RunComparison from '../components/RunComparison'
 
 const Analysis = () => {
-  const { parsedData } = useDataContext()
+  const { parsedData, removeDuplicates, clearAllData } = useDataContext()
   const [expandedRuns, setExpandedRuns] = useState<Set<number>>(new Set())
   const [selectedRun, setSelectedRun] = useState<GPXData | null>(
     parsedData.length > 0 ? getMostRecentRun(parsedData) : null
@@ -166,17 +166,31 @@ const Analysis = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Run {index + 1}: {run.fileName}
+                      <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                        <span>Run {index + 1}: {run.fileName}</span>
+                        {run.source === 'strava' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                            </svg>
+                            Strava
+                          </span>
+                        )}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {run.startTime.toLocaleDateString()} • {run.splits.length} mile{run.splits.length !== 1 ? 's' : ''}
+                        {run.startTime.toLocaleDateString()} • {run.source === 'strava' ? `${(run.totalDistance / 1609.34).toFixed(1)} miles` : `${run.splits.length} mile${run.splits.length !== 1 ? 's' : ''}`}
                       </p>
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="text-right text-sm">
                         <div className="font-medium text-gray-900">{formatDistance(run.totalDistance)}</div>
                         <div className="text-gray-600">{formatPace(run.avgPace)}</div>
+                        {/* Debug: Show raw pace value */}
+                        {run.source === 'strava' && (
+                          <div className="text-xs text-gray-400">
+                            Raw pace: {run.avgPace.toFixed(2)} min/mi
+                          </div>
+                        )}
                       </div>
                       <motion.div
                         animate={{ rotate: expandedRuns.has(index) ? 180 : 0 }}
@@ -202,7 +216,7 @@ const Analysis = () => {
                       className="border-t"
                     >
                       <div className="p-6 grid md:grid-cols-2 gap-6">
-                        <PacePerMileChart data={run.splits} />
+                        <PacePerMileChart data={run.splits} source={run.source} />
                         <RightChartsPanel run={run} />
                       </div>
                     </motion.div>
@@ -226,15 +240,41 @@ const Analysis = () => {
               <p className="text-blue-700 mb-4">
                 Add more GPX files to get deeper insights and better analysis.
               </p>
-              <Link
-                to="/upload"
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                Upload More Files
-                <svg className="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </Link>
+              <div className="flex space-x-4">
+                <Link
+                  to="/upload"
+                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  Upload More Files
+                  <svg className="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </Link>
+                
+                {parsedData.some(run => run.source === 'strava') && (
+                  <button
+                    onClick={removeDuplicates}
+                    className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Remove Duplicates
+                    <svg className="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                )}
+                
+                <button
+                  onClick={clearAllData}
+                  className="inline-flex items-center px-6 py-3 border border-red-300 text-base font-medium rounded-md text-red-700 bg-white hover:bg-red-50"
+                >
+                  Clear All Data
+                  <svg className="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

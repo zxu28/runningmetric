@@ -26,6 +26,17 @@ const RunMap: React.FC<RunMapProps> = ({ run }) => {
   const coordinates = extractCoordinates(run)
   const bounds = calculateBounds(coordinates)
 
+  // Debug logging
+  console.log('RunMap received:', { 
+    fileName: run.fileName,
+    source: run.source,
+    tracksCount: run.tracks.length,
+    totalPoints: run.tracks.reduce((sum, track) => sum + track.points.length, 0),
+    coordinatesLength: coordinates.length,
+    firstCoordinate: coordinates[0],
+    lastCoordinate: coordinates[coordinates.length - 1]
+  })
+
   if (coordinates.length === 0) {
     return (
       <motion.div

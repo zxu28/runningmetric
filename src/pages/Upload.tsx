@@ -5,6 +5,7 @@ import { parseMultipleGPXFiles, formatDistance, formatDuration, formatPace, GPXD
 import { useDataContext } from '../contexts/DataContext'
 import StravaConnectButton from '../components/StravaConnectButton'
 import { stravaService } from '../services/stravaService'
+import { convertStravaActivityToGPXData, validateStravaStreams } from '../utils/stravaConverter'
 
 const Upload = () => {
   const navigate = useNavigate()
@@ -16,10 +17,121 @@ const Upload = () => {
 
   const handleStravaSync = async () => {
     try {
-      const activities = await stravaService.fetchActivities({ per_page: 10 })
-      console.log(`Fetched ${activities.length} activities from Strava`)
-      // TODO: Convert Strava activities to GPXData format
-      alert(`Successfully synced ${activities.length} activities from Strava!`)
+      console.log('Starting Strava sync...')
+      const activities = await stravaService.fetchActivities({ per_page: 2 }) // Start with just 2 for debugging
+      console.log(`Fetched ${activities.length} activities from Strava:`, activities)
+      
+      const stravaData: GPXData[] = []
+      
+      // Process each activity with detailed streams
+      for (const activity of activities) {
+        try {
+          console.log(`\n=== Processing activity: ${activity.name} (ID: ${activity.id}) ===`)
+          
+          // Fetch detailed streams for this activity
+          console.log('Fetching detailed streams...')
+          const { activity: detailedActivity, streams } = await stravaService.fetchActivityWithStreams(activity.id)
+          
+          console.log('Streams received:', {
+            latlng: streams.latlng?.data?.length || 0,
+            time: streams.time?.data?.length || 0,
+            distance: streams.distance?.data?.length || 0,
+            altitude: streams.altitude?.data?.length || 0
+          })
+          
+          // Validate streams
+          const validation = validateStravaStreams(streams)
+          console.log('Stream validation:', validation)
+          
+          if (!validation.isValid) {
+            console.warn(`Activity ${activity.name} has invalid streams:`, validation.issues)
+            // Fall back to basic data without streams
+            const basicData = {
+              fileName: `${activity.name} (Strava)`,
+              totalDistance: activity.distance,
+              totalDuration: activity.moving_time,
+              avgPace: activity.moving_time / 60 / (activity.distance / 1609.34),
+              elevationGain: activity.total_elevation_gain,
+              tracks: [{
+                points: [],
+                name: activity.name
+              }],
+              splits: [],
+              startTime: new Date(activity.start_date),
+              endTime: new Date(activity.start_date),
+              source: 'strava' as const,
+              stravaId: activity.id
+            }
+            stravaData.push(basicData)
+            console.log(`Added basic data for ${activity.name} (no GPS points)`)
+            continue
+          }
+          
+          // Convert to GPXData format with detailed streams
+          console.log('Converting streams to GPX format...')
+          const gpxData = convertStravaActivityToGPXData(detailedActivity, streams)
+          stravaData.push(gpxData)
+          
+          console.log(`✅ Successfully processed ${activity.name}:`)
+          console.log(`   - GPS points: ${gpxData.tracks[0].points.length}`)
+          console.log(`   - Mile splits: ${gpxData.splits.length}`)
+          console.log(`   - Total distance: ${gpxData.totalDistance}m`)
+          console.log(`   - Avg pace: ${gpxData.avgPace.toFixed(2)} min/mi`)
+          
+        } catch (error) {
+          console.error(`❌ Failed to process activity ${activity.name}:`, error)
+          // Add basic data as fallback
+          const basicData = {
+            fileName: `${activity.name} (Strava)`,
+            totalDistance: activity.distance,
+            totalDuration: activity.moving_time,
+            avgPace: activity.moving_time / 60 / (activity.distance / 1609.34),
+            elevationGain: activity.total_elevation_gain,
+            tracks: [{
+              points: [],
+              name: activity.name
+            }],
+            splits: [],
+            startTime: new Date(activity.start_date),
+            endTime: new Date(activity.start_date),
+            source: 'strava' as const,
+            stravaId: activity.id
+          }
+          stravaData.push(basicData)
+          console.log(`Added fallback basic data for ${activity.name}`)
+        }
+      }
+      
+      console.log('\n=== Final converted data ===')
+      console.log('Converted Strava activities:', stravaData)
+      
+      // Check for duplicates before adding
+      const existingData = JSON.parse(localStorage.getItem('runningData') || '[]')
+      const existingStravaIds = existingData
+        .filter((item: any) => item.source === 'strava')
+        .map((item: any) => item.stravaId)
+      
+      // Filter out activities that already exist
+      const newActivities = stravaData.filter(activity => 
+        !existingStravaIds.includes(activity.stravaId)
+      )
+      
+      if (newActivities.length === 0) {
+        alert('All Strava activities are already synced!')
+        return
+      }
+      
+      // Add only new activities to DataContext
+      addParsedData(newActivities)
+      
+      const activitiesWithStreams = newActivities.filter(a => a.tracks[0].points.length > 0).length
+      alert(`Successfully synced ${newActivities.length} activities from Strava! ${activitiesWithStreams} have detailed GPS data. Check the Analysis page to view them.`)
+      
+      // Redirect to analysis page to see the synced activities
+      setTimeout(() => {
+        window.location.href = '/runningmetric/analysis'
+      }, 2000)
+      
     } catch (error) {
       console.error('Strava sync error:', error)
       alert('Failed to sync from Strava. Please try again.')
