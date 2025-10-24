@@ -6,7 +6,7 @@ A modern, privacy-first web application for analyzing running data from GPX file
 ![React](https://img.shields.io/badge/React-18.2.0-blue?style=flat-square&logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.2.0-blue?style=flat-square&logo=typescript)
 
->  **Note**: GitHub Pages routing has been fixed! All deep links now work correctly. Strava OAuth integration is working on both localhost and production.
+>  **Note**: encountering configuration problems and bad request error currently. The Strava OAuth does not work currently.
 
 ##  Features
 
