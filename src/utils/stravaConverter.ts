@@ -1,7 +1,7 @@
 // Strava Stream Converter
 // Converts Strava API streams to GPXPoint format for analysis
 
-import { GPXPoint, GPXTrack, MileSplit, calculateMileSplits, GPXData } from './gpxParser'
+import { GPXPoint, GPXTrack, calculateMileSplits, GPXData } from './gpxParser'
 
 export interface StravaStreams {
   latlng?: {
@@ -56,14 +56,14 @@ export function convertStravaStreamsToGPXPoints(
   const latlngData = streams.latlng.data
   const timeData = streams.time.data
   const altitudeData = streams.altitude?.data || []
-  const distanceData = streams.distance?.data || []
+  // Note: distanceData available but not used in current implementation
 
   // Convert each point
   for (let i = 0; i < latlngData.length; i++) {
     const [lat, lng] = latlngData[i]
     const timeSeconds = timeData[i]
     const elevation = altitudeData[i] || 0
-    const distance = distanceData[i] || 0
+    // Note: distance data available but not used in current implementation
 
     // Calculate actual timestamp
     const timestamp = new Date(startTime.getTime() + timeSeconds * 1000)

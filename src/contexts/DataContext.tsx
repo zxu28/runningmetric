@@ -69,7 +69,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
             fileName: sampleRun.fileName,
             source: sampleRun.source,
             tracksCount: sampleRun.tracks.length,
-            totalPoints: sampleRun.tracks.reduce((sum, track) => sum + track.points.length, 0),
+            totalPoints: sampleRun.tracks.reduce((sum: number, track: any) => sum + track.points.length, 0),
             splitsCount: sampleRun.splits.length,
             firstPoint: sampleRun.tracks[0]?.points[0],
             firstSplit: sampleRun.splits[0]
@@ -77,26 +77,26 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         }
         
         // Debug: Check for duplicates and data issues
-        const stravaRuns = dataWithDates.filter(run => run.source === 'strava')
-        const gpxRuns = dataWithDates.filter(run => run.source !== 'strava')
+        const stravaRuns = dataWithDates.filter((run: any) => run.source === 'strava')
+        const gpxRuns = dataWithDates.filter((run: any) => run.source !== 'strava')
         
         console.log(`Debug - Strava runs: ${stravaRuns.length}, GPX runs: ${gpxRuns.length}`)
         
         // Check for duplicate Strava IDs
-        const stravaIds = stravaRuns.map(run => run.stravaId)
+        const stravaIds = stravaRuns.map((run: any) => run.stravaId)
         const uniqueStravaIds = [...new Set(stravaIds)]
         if (stravaIds.length !== uniqueStravaIds.length) {
           console.warn(`Found ${stravaIds.length - uniqueStravaIds.length} duplicate Strava activities!`)
         }
         
         // Check for unrealistic distances
-        const unrealisticRuns = dataWithDates.filter(run => run.totalDistance > 50000) // > 50km
+        const unrealisticRuns = dataWithDates.filter((run: any) => run.totalDistance > 50000) // > 50km
         if (unrealisticRuns.length > 0) {
           console.warn(`Found ${unrealisticRuns.length} runs with unrealistic distances:`, unrealisticRuns)
         }
       }
     } catch (error) {
-      console.error('Error loading data from localStorage:', error)
+      console.error('Error loading data from localStorage:', error instanceof Error ? error.message : 'Unknown error')
     }
   }, [])
 
@@ -122,9 +122,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         localStorage.setItem('runningData', JSON.stringify(updatedData))
         console.log('Successfully saved to localStorage')
       } catch (error) {
-        console.error('Failed to save to localStorage:', error)
+        console.error('Failed to save to localStorage:', error instanceof Error ? error.message : 'Unknown error')
         // If localStorage is full, try to clear some old data
-        if (error.name === 'QuotaExceededError') {
+        if (error instanceof Error && error.name === 'QuotaExceededError') {
           console.log('localStorage full, clearing old data...')
           localStorage.removeItem('runningData')
           localStorage.setItem('runningData', JSON.stringify(updatedData))
