@@ -31,16 +31,30 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build
+        run: |
+          echo "Environment variables check:"
+          echo "VITE_STRAVA_CLIENT_ID length: ${#VITE_STRAVA_CLIENT_ID}"
+          echo "VITE_STRAVA_CLIENT_SECRET length: ${#VITE_STRAVA_CLIENT_SECRET}"
+          echo "VITE_STRAVA_REDIRECT_URI: $VITE_STRAVA_REDIRECT_URI"
+          npm run build
         env:
           VITE_STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
           VITE_STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
           VITE_STRAVA_REDIRECT_URI: ${{ secrets.STRAVA_REDIRECT_URI }}
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist
+      - name: Verify build contains environment variables
+        run: |
+          echo "Checking if environment variables are in the build:"
+          if grep -q "181996" dist/assets/*.js; then
+            echo "✅ Client ID found in build"
+          else
+            echo "❌ Client ID NOT found in build"
+          fi
+          if grep -q "strava-callback" dist/assets/*.js; then
+            echo "✅ Redirect URI found in build"
+          else
+            echo "❌ Redirect URI NOT found in build"
+          fi
 
   deploy:
     needs: build
