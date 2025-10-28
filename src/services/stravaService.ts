@@ -201,6 +201,43 @@ class StravaService {
     }
   }
 
+  // Fetch ALL activities using pagination
+  async fetchAllActivities(): Promise<StravaActivity[]> {
+    console.log('🔄 Starting pagination to fetch ALL activities...')
+    const allActivities: StravaActivity[] = []
+    let page = 1
+    const perPage = 200 // Strava API max
+    let hasMore = true
+
+    while (hasMore) {
+      try {
+        console.log(`📄 Fetching page ${page} (${perPage} per page)...`)
+        const activities = await this.fetchActivities({ page, per_page: perPage })
+        
+        if (activities.length === 0) {
+          console.log(`✅ Reached end of activities at page ${page}`)
+          hasMore = false
+        } else {
+          console.log(`✓ Page ${page}: ${activities.length} running activities`)
+          allActivities.push(...activities)
+          page++
+          
+          // If we got less than perPage results, we've reached the end
+          if (activities.length < perPage) {
+            hasMore = false
+          }
+        }
+      } catch (error) {
+        console.error(`❌ Error fetching page ${page}:`, error)
+        // Stop pagination on error but return what we have so far
+        hasMore = false
+      }
+    }
+
+    console.log(`🎉 Pagination complete! Total activities fetched: ${allActivities.length}`)
+    return allActivities
+  }
+
   // Fetch detailed activity streams (GPS data)
   async fetchActivityStreams(activityId: number): Promise<any> {
     try {

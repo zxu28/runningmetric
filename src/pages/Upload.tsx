@@ -18,9 +18,9 @@ const Upload = () => {
   const handleStravaSync = async () => {
     try {
       console.log('Starting Strava sync...')
-      const activities = await stravaService.fetchActivities({ per_page: 30 }) // Fetch up to 30 recent activities
+      const activities = await stravaService.fetchAllActivities() // Fetch ALL activities using pagination
       console.log(`\n📊 SYNC SUMMARY:`)
-      console.log(`Fetched ${activities.length} activities from Strava`)
+      console.log(`Fetched ${activities.length} total activities from Strava`)
       console.log('Activity names:', activities.map(a => a.name))
       
       const stravaData: GPXData[] = []
@@ -28,11 +28,12 @@ const Upload = () => {
       // Process each activity with detailed streams
       for (const activity of activities) {
         try {
-          console.log(`\n=== Processing activity ${activities.indexOf(activity) + 1}/${activities.length}: ${activity.name} (ID: ${activity.id}) ===`)
+          const currentIndex = activities.indexOf(activity) + 1
+          console.log(`\n=== Processing activity ${currentIndex}/${activities.length}: ${activity.name} (ID: ${activity.id}) ===`)
           
           // Fetch detailed streams for this activity
-          // Note: Each activity requires 2 API calls (activity + streams), so 30 activities = 60 requests
-          // Strava limit: 600 requests per 15 minutes, so this should be fine
+          // Note: Each activity requires 2 API calls (activity + streams)
+          // For large datasets, this can hit rate limits. Consider batching or delays if needed.
           console.log('Fetching detailed streams...')
           const { activity: detailedActivity, streams } = await stravaService.fetchActivityWithStreams(activity.id)
           
