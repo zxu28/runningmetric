@@ -18,7 +18,7 @@ const Upload = () => {
   const handleStravaSync = async () => {
     try {
       console.log('Starting Strava sync...')
-      const activities = await stravaService.fetchActivities({ per_page: 2 }) // Start with just 2 for debugging
+      const activities = await stravaService.fetchActivities({ per_page: 30 }) // Fetch up to 30 recent activities
       console.log(`Fetched ${activities.length} activities from Strava:`, activities)
       
       const stravaData: GPXData[] = []
