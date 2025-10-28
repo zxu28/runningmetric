@@ -132,15 +132,26 @@ const Upload = () => {
       }
       
       // Add only new activities to DataContext
+      console.log('Adding to DataContext:', newActivities.length, 'activities')
       addParsedData(newActivities)
+      
+      // Wait a moment for data to be saved to localStorage
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Verify data was saved
+      const savedData = localStorage.getItem('runningData')
+      if (savedData) {
+        const parsed = JSON.parse(savedData)
+        console.log('✅ Verified data in localStorage:', parsed.length, 'total activities')
+      } else {
+        console.error('❌ No data found in localStorage after adding!')
+      }
       
       const activitiesWithStreams = newActivities.filter(a => a.tracks[0].points.length > 0).length
       alert(`Successfully synced ${newActivities.length} activities from Strava! ${activitiesWithStreams} have detailed GPS data. Check the Analysis page to view them.`)
       
-      // Redirect to analysis page to see the synced activities
-      setTimeout(() => {
-        window.location.href = '/runningmetric/analysis'
-      }, 2000)
+      // Navigate using React Router instead of window.location for proper state preservation
+      navigate('/analysis')
       
     } catch (error: any) {
       console.error('Strava sync error:', error)
