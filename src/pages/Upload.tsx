@@ -28,9 +28,11 @@ const Upload = () => {
       // Process each activity with detailed streams
       for (const activity of activities) {
         try {
-          console.log(`\n=== Processing activity: ${activity.name} (ID: ${activity.id}) ===`)
+          console.log(`\n=== Processing activity ${activities.indexOf(activity) + 1}/${activities.length}: ${activity.name} (ID: ${activity.id}) ===`)
           
           // Fetch detailed streams for this activity
+          // Note: Each activity requires 2 API calls (activity + streams), so 30 activities = 60 requests
+          // Strava limit: 600 requests per 15 minutes, so this should be fine
           console.log('Fetching detailed streams...')
           const { activity: detailedActivity, streams } = await stravaService.fetchActivityWithStreams(activity.id)
           
@@ -140,9 +142,15 @@ const Upload = () => {
         window.location.href = '/runningmetric/analysis'
       }, 2000)
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Strava sync error:', error)
-      alert('Failed to sync from Strava. Please try again.')
+      
+      // Check for rate limit errors
+      if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
+        alert('Rate limit exceeded! Strava allows 600 requests per 15 minutes. Please wait a few minutes and try again.')
+      } else {
+        alert(`Failed to sync from Strava: ${error.message || 'Unknown error'}`)
+      }
     }
   }
 
