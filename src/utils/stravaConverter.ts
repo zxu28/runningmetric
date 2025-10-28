@@ -49,7 +49,12 @@ export function convertStravaStreamsToGPXPoints(
   
   // Check if we have the required data
   if (!streams.latlng?.data || !streams.time?.data) {
-    console.warn('Missing required stream data (latlng or time)')
+    console.warn('Missing required stream data:', {
+      hasLatLng: !!streams.latlng?.data,
+      latLngLength: streams.latlng?.data?.length || 0,
+      hasTime: !!streams.time?.data,
+      timeLength: streams.time?.data?.length || 0
+    })
     return points
   }
 
@@ -142,12 +147,18 @@ export function validateStravaStreams(streams: StravaStreams): {
     }
   }
 
+  // Distance is nice to have but not required - only warn, don't fail
   if (!streams.distance?.data || streams.distance.data.length === 0) {
-    issues.push('Missing distance data')
+    console.warn('Missing distance data (optional - can work without it)')
   }
 
+  // Only return invalid if we're missing GPS or time (critical data)
+  const criticalIssues = issues.filter(issue => 
+    issue.includes('GPS coordinates') || issue.includes('time data')
+  )
+  
   return {
-    isValid: issues.length === 0,
+    isValid: criticalIssues.length === 0,
     issues
   }
 }
