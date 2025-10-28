@@ -206,7 +206,7 @@ class StravaService {
     console.log('🔄 Starting pagination to fetch ALL activities...')
     const allActivities: StravaActivity[] = []
     let page = 1
-    const perPage = 200 // Strava API max
+    const perPage = 30 // Reduced from 200 to stay under rate limits (30 activities = 30 API calls, safe)
     let hasMore = true
 
     while (hasMore) {
@@ -232,9 +232,21 @@ class StravaService {
             hasMore = false
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`❌ Error fetching page ${page}:`, error)
-        // Stop pagination on error but return what we have so far
+        
+        // Check if it's a rate limit error (429)
+        if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
+          console.error('⚠️ RATE LIMIT EXCEEDED!')
+          console.error('  Strava API returned 429 - Too Many Requests')
+          console.error('  Either:')
+          console.error('    1. Wait 15 minutes and try again')
+          console.error('    2. We fetched too many pages too quickly')
+          console.error(`  Currently fetched: ${allActivities.length} activities`)
+          throw new Error('Rate limit exceeded. Please wait 15 minutes before syncing again.')
+        }
+        
+        // Stop pagination on other errors but return what we have so far
         hasMore = false
       }
     }
@@ -246,6 +258,7 @@ class StravaService {
       console.warn('  1. You have no running activities in Strava')
       console.warn('  2. API returned only non-running activities (they are filtered out)')
       console.warn('  3. Authentication/token issue')
+      console.warn('  4. Rate limit exceeded (429 error)')
     }
     return allActivities
   }
