@@ -128,31 +128,34 @@ const Upload = () => {
       console.log('New activity names:', newActivities.map(a => a.fileName))
       
       if (newActivities.length === 0) {
+        console.log('No new activities to sync')
         alert(`All Strava activities are already synced! (Fetched ${stravaData.length}, but all were duplicates)`)
-        return
-      }
-      
-      // Add only new activities to DataContext
-      console.log('Adding to DataContext:', newActivities.length, 'activities')
-      addParsedData(newActivities)
-      
-      // Wait a moment for data to be saved to localStorage
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Verify data was saved
-      const savedData = localStorage.getItem('runningData')
-      if (savedData) {
-        const parsed = JSON.parse(savedData)
-        console.log('✅ Verified data in localStorage:', parsed.length, 'total activities')
+        // Don't return early - let function complete normally
       } else {
-        console.error('❌ No data found in localStorage after adding!')
+        // Add only new activities to DataContext
+        console.log('Adding to DataContext:', newActivities.length, 'activities')
+        addParsedData(newActivities)
+        
+        // Wait a moment for data to be saved to localStorage
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // Verify data was saved
+        const savedData = localStorage.getItem('runningData')
+        if (savedData) {
+          const parsed = JSON.parse(savedData)
+          console.log('✅ Verified data in localStorage:', parsed.length, 'total activities')
+        } else {
+          console.error('❌ No data found in localStorage after adding!')
+        }
+        
+        const activitiesWithStreams = newActivities.filter(a => a.tracks[0].points.length > 0).length
+        alert(`Successfully synced ${newActivities.length} activities from Strava! ${activitiesWithStreams} have detailed GPS data. Check the Analysis page to view them.`)
+        
+        // Navigate using React Router instead of window.location for proper state preservation
+        navigate('/analysis')
       }
       
-      const activitiesWithStreams = newActivities.filter(a => a.tracks[0].points.length > 0).length
-      alert(`Successfully synced ${newActivities.length} activities from Strava! ${activitiesWithStreams} have detailed GPS data. Check the Analysis page to view them.`)
-      
-      // Navigate using React Router instead of window.location for proper state preservation
-      navigate('/analysis')
+      console.log('✅ Sync process completed successfully')
       
     } catch (error: any) {
       console.error('Strava sync error:', error)

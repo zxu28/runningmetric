@@ -34,15 +34,27 @@ const StravaConnectButton: React.FC<StravaConnectButtonProps> = ({ onSync }) => 
 
   const handleSync = async () => {
     setIsSyncing(true)
+    console.log('🔄 Sync started')
+    
+    // Safety timeout - clear loading after 5 minutes max
+    const timeout = setTimeout(() => {
+      console.warn('⚠️ Sync timeout - clearing loading state after 5 minutes')
+      setIsSyncing(false)
+      alert('Sync is taking longer than expected. Please check the console for errors or try again.')
+    }, 5 * 60 * 1000) // 5 minutes
+    
     try {
       if (onSync) {
         await onSync()
+        console.log('✅ Sync completed successfully')
       }
     } catch (error) {
-      console.error('Sync error:', error)
+      console.error('❌ Sync error:', error)
       alert('Failed to sync activities. Please try again.')
     } finally {
+      clearTimeout(timeout)
       setIsSyncing(false)
+      console.log('🔚 Sync finished - loading state cleared')
     }
   }
 
