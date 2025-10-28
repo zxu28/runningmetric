@@ -19,7 +19,9 @@ const Upload = () => {
     try {
       console.log('Starting Strava sync...')
       const activities = await stravaService.fetchActivities({ per_page: 30 }) // Fetch up to 30 recent activities
-      console.log(`Fetched ${activities.length} activities from Strava:`, activities)
+      console.log(`\n📊 SYNC SUMMARY:`)
+      console.log(`Fetched ${activities.length} activities from Strava`)
+      console.log('Activity names:', activities.map(a => a.name))
       
       const stravaData: GPXData[] = []
       
@@ -103,7 +105,8 @@ const Upload = () => {
       }
       
       console.log('\n=== Final converted data ===')
-      console.log('Converted Strava activities:', stravaData)
+      console.log(`Total activities processed: ${stravaData.length}`)
+      console.log('Converted Strava activities:', stravaData.map(a => ({ name: a.fileName, id: a.stravaId })))
       
       // Check for duplicates before adding
       const existingData = JSON.parse(localStorage.getItem('runningData') || '[]')
@@ -111,13 +114,18 @@ const Upload = () => {
         .filter((item: any) => item.source === 'strava')
         .map((item: any) => item.stravaId)
       
+      console.log(`\nExisting Strava IDs in localStorage: ${existingStravaIds.length}`, existingStravaIds)
+      
       // Filter out activities that already exist
       const newActivities = stravaData.filter(activity => 
         !existingStravaIds.includes(activity.stravaId)
       )
       
+      console.log(`New activities to add: ${newActivities.length}`)
+      console.log('New activity names:', newActivities.map(a => a.fileName))
+      
       if (newActivities.length === 0) {
-        alert('All Strava activities are already synced!')
+        alert(`All Strava activities are already synced! (Fetched ${stravaData.length}, but all were duplicates)`)
         return
       }
       
