@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug localStorage</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 5px;
+        }
+        h2 { color: #0ff; }
+        button {
+            padding: 10px 20px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { background: #0055aa; }
+        pre {
+            background: #000;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Running Metrics localStorage Debugger</h1>
+    
+    <div class="section">
+        <h2>Running Data</h2>
+        <button onclick="checkRunningData()">Check Running Data</button>
+        <pre id="runningData"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>Strava Tokens</h2>
+        <button onclick="checkStravaTokens()">Check Strava Tokens</button>
+        <pre id="stravaTokens"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>All localStorage Keys</h2>
+        <button onclick="showAllKeys()">Show All Keys</button>
+        <pre id="allKeys"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>Clear Storage</h2>
+        <button onclick="clearRunningData()" style="background: #cc0000;">Clear Running Data</button>
+        <button onclick="clearStravaTokens()" style="background: #cc0000;">взяти Strava Tokens</button>
+        <button onclick="clearEverything()" style="background: #cc0000;">Clear Everything</button>
+    </div>
+
+    <script>
+        function checkRunningData() {
+            const data = localStorage.getItem('runningData');
+            const output = document.getElementById('runningData');
+            
+            if (!data) {
+                output.textContent = 'No running data found';
+                return;
+            }
+            
+            try {
+                const parsed = JSON.parse(data);
+                output.textContent = JSON.stringify(parsed, null, 2);
+                console.log('Running data:', parsed);
+                console.log('Total runs:', parsed.length);
+            } catch (e) {
+                output.textContent = 'Error parsing: ' + e.message;
+            }
+        }
+        
+        function checkStravaTokens() {
+            const tokens = localStorage.getItem('strava_tokens');
+            const output = document.getElementById('stravaTokens');
+            
+            if (!tokens) {
+                output.textContent = 'No Strava tokens found';
+                return;
+            }
+            
+            try {
+                const parsed = JSON.parse(tokens);
+                // Don't show full tokens for security
+                output.textContent = JSON.stringify({
+                    hasAccessToken: !!parsed.accessToken,
+                    hasRefreshToken: !!parsed.refreshToken,
+                    athleteName: parsed.athleteName,
+                    athleteId: parsed.athleteId,
+                    expiresAt: new Date(parsed.expiresAt * 1000).toLocaleString()
+                }, null, 2);
+            } catch (e) {
+                output.textContent = 'Error parsing: ' + e.message;
+            }
+        }
+        
+        function showAllKeys() {
+            const keys = Object.keys(localStorage);
+            const output = document.getElementById('allKeys');
+            output.textContent = keys.join('\n');
+        }
+        
+        function clearRunningData() {
+            if (confirm('Clear running data?')) {
+                localStorage.removeItem('runningData');
+                alert('Cleared!');
+            }
+        }
+        
+        function clearStravaTokens() {
+            if (confirm('Clear Strava tokens?')) {
+                localStorage.removeItem('strava_tokens');
+                alert('Cleared!');
+            }
+        }
+        
+        function clearEverything() {
+            if (confirm('Clear ALL localStorage data?')) {
+                localStorage.clear();
+                alert('Everything cleared!');
+            }
+        }
+        
+        // Auto-run on load
+        window.onload = function() {
+            checkRunningData();
+            checkStravaTokens();
+            showAllKeys();
+        };
+    </script>
+</body>
+</html>
+

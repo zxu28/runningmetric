@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useDataContext } from '../contexts/DataContext'
@@ -45,6 +45,36 @@ const Analysis = () => {
   const handleSelectRun = (run: GPXData) => {
     setSelectedRun(run)
   }
+
+  // Debug: Log localStorage data
+  useEffect(() => {
+    const stored = localStorage.getItem('runningData')
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        console.log('🔍 localStorage Debug Info:')
+        console.log('- Total items in storage:', parsed.length)
+        console.log('- Data:', parsed)
+        parsed.forEach((run: any, index: number) => {
+          console.log(`Run ${index + 1}:`, {
+            fileName: run.fileName,
+            source: run.source,
+            stravaId: run.stravaId,
+            date: run.startTime,
+            distance: run.totalDistance,
+            hasTracks: !!run.tracks,
+            tracksLength: run.tracks?.length || 0,
+            hasSplits: !!run.splits,
+            splitsLength: run.splits?.length || 0
+          })
+        })
+      } catch (error) {
+        console.error('Error parsing localStorage:', error)
+      }
+    } else {
+      console.log('🔍 No data in localStorage')
+    }
+  }, [])
 
   // If no data, show error message
   if (parsedData.length === 0) {
