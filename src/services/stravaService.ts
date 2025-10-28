@@ -216,6 +216,11 @@ class StravaService {
         
         if (activities.length === 0) {
           console.log(`✅ Reached end of activities at page ${page}`)
+          if (page === 1 && allActivities.length === 0) {
+            console.warn('⚠️ WARNING: No activities returned on first page!')
+            console.warn('  This could mean you have no running activities in Strava')
+            console.warn('  or there was an issue fetching them.')
+          }
           hasMore = false
         } else {
           console.log(`✓ Page ${page}: ${activities.length} running activities`)
@@ -235,6 +240,13 @@ class StravaService {
     }
 
     console.log(`🎉 Pagination complete! Total activities fetched: ${allActivities.length}`)
+    if (allActivities.length === 0) {
+      console.warn('⚠️ DIAGNOSIS: Zero activities fetched total!')
+      console.warn('  Possible causes:')
+      console.warn('  1. You have no running activities in Strava')
+      console.warn('  2. API returned only non-running activities (they are filtered out)')
+      console.warn('  3. Authentication/token issue')
+    }
     return allActivities
   }
 

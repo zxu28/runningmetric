@@ -49,7 +49,8 @@ const Upload = () => {
           console.log('Stream validation:', validation)
           
           if (!validation.isValid) {
-            console.warn(`Activity ${activity.name} has invalid streams:`, validation.issues)
+            console.warn(`⚠️ Activity ${activity.name} has invalid streams:`, validation.issues)
+            console.warn('  Falling back to basic data without GPS points')
             // Fall back to basic data without streams
             const basicData = {
               fileName: `${activity.name} (Strava)`,
@@ -85,6 +86,7 @@ const Upload = () => {
           
         } catch (error) {
           console.error(`❌ Failed to process activity ${activity.name}:`, error)
+          console.error('  Error details:', error)
           // Add basic data as fallback
           const basicData = {
             fileName: `${activity.name} (Strava)`,
@@ -107,8 +109,14 @@ const Upload = () => {
         }
       }
       
-      console.log('\n=== Final converted data ===')
+      console.log('\n=== Final PATH data ===')
       console.log(`Total activities processed: ${stravaData.length}`)
+      if (stravaData.length === 0) {
+        console.warn('⚠️ CRITICAL: No activities were converted! This could mean:')
+        console.warn('  - No activities fetched from Strava')
+        console.warn('  - All activities failed validation/conversion')
+        console.warn('  - Error occurred during stream fetching')
+      }
       console.log('Converted Strava activities:', stravaData.map(a => ({ name: a.fileName, id: a.stravaId })))
       
       // Check for duplicates before adding
