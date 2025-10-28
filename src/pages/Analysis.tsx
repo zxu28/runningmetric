@@ -46,15 +46,18 @@ const Analysis = () => {
     setSelectedRun(run)
   }
 
-  // Debug: Log localStorage data
+  // Debug: Log localStorage data and context state
   useEffect(() => {
+    console.log('📊 Analysis Page - Data State Check:')
+    console.log('- parsedData from context:', parsedData.length, 'items')
+    console.log('- parsedData:', parsedData)
+    
     const stored = localStorage.getItem('runningData')
     if (stored) {
       try {
         const parsed = JSON.parse(stored)
         console.log('🔍 localStorage Debug Info:')
         console.log('- Total items in storage:', parsed.length)
-        console.log('- Data:', parsed)
         parsed.forEach((run: any, index: number) => {
           console.log(`Run ${index + 1}:`, {
             fileName: run.fileName,
@@ -68,13 +71,18 @@ const Analysis = () => {
             splitsLength: run.splits?.length || 0
           })
         })
+        
+        // Compare with context
+        if (parsedData.length !== parsed.length) {
+          console.warn(`⚠️ MISMATCH: localStorage has ${parsed.length} items, but context has ${parsedData.length}`)
+        }
       } catch (error) {
         console.error('Error parsing localStorage:', error)
       }
     } else {
       console.log('🔍 No data in localStorage')
     }
-  }, [])
+  }, [parsedData])
 
   // If no data, show error message
   if (parsedData.length === 0) {
