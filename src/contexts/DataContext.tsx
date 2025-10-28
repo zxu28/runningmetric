@@ -119,15 +119,26 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       
       // Save to localStorage with proper serialization
       try {
-        localStorage.setItem('runningData', JSON.stringify(updatedData))
+        const dataStr = JSON.stringify(updatedData)
+        console.log(`Attempting to save ${dataStr.length} bytes to localStorage`)
+        localStorage.setItem('runningData', dataStr)
         console.log('Successfully saved to localStorage')
       } catch (error) {
         console.error('Failed to save to localStorage:', error instanceof Error ? error.message : 'Unknown error')
         // If localStorage is full, try to clear some old data
         if (error instanceof Error && error.name === 'QuotaExceededError') {
-          console.log('localStorage full, clearing old data...')
-          localStorage.removeItem('runningData')
-          localStorage.setItem('runningData', JSON.stringify(updatedData))
+          console.warn('⚠️ localStorage QUOTA EXCEEDED!')
+          console.warn('  This means you have too much data stored')
+          console.warn('  Solution: Clear old data or reduce number of activities synced')
+          console.log('localStorage full, attempting to clear and save...')
+          try {
+            localStorage.removeItem('runningData')
+            localStorage.setItem('runningData', JSON.stringify(updatedData))
+            console.log('Successfully recovered from quota error')
+          } catch (retryError) {
+            console.error('❌ Cannot save even after clearing:', retryError)
+            alert('Cannot save data: localStorage is full. Please clear some browser data.')
+          }
         }
       }
       return updatedData
