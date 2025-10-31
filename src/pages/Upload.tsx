@@ -335,47 +335,47 @@ const Upload = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-organic-gradient py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Upload GPX Files</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-earth-800 mb-10">Upload GPX Files</h1>
           
           {/* Strava Connect Section */}
-          <div className="mb-8">
+          <div className="mb-10">
             <StravaConnectButton onSync={handleStravaSync} />
           </div>
 
           {/* Divider */}
-          <div className="relative mb-8">
+          <div className="relative mb-10">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+              <div className="w-full border-t-2 border-earth-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-gray-50 text-gray-500 font-medium">OR</span>
+              <span className="px-6 bg-organic-gradient text-earth-600 font-medium rounded-full border-2 border-earth-200 py-2">OR</span>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-8">
+          <div className="bg-white/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-10">
             <div
-              className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
+              className={`border-2 border-dashed rounded-organic-lg p-16 text-center transition-all duration-300 ${
                 dragActive 
-                  ? 'border-blue-400 bg-blue-50' 
-                  : 'border-gray-300 hover:border-gray-400'
+                  ? 'border-sage-400 bg-sage-50/50 shadow-organic-lg scale-105' 
+                  : 'border-earth-300 hover:border-sage-400 hover:bg-earth-50/30'
               }`}
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
             >
-              <div className="text-6xl mb-4">📁</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <div className="text-7xl mb-6 animate-float">📁</div>
+              <h3 className="text-2xl font-semibold text-earth-800 mb-3">
                 Drop your GPX files here
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-earth-600 mb-6 text-lg">
                 or click to browse your computer
               </p>
               <input
@@ -388,7 +388,7 @@ const Upload = () => {
               />
               <label
                 htmlFor="file-upload"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                className="inline-flex items-center px-8 py-4 border-2 border-transparent text-base font-medium rounded-organic-lg text-white bg-sage-600 hover:bg-sage-700 cursor-pointer shadow-organic-lg hover:shadow-organic transform hover:scale-105 transition-all duration-300"
               >
                 Choose Files
               </label>
@@ -398,38 +398,45 @@ const Upload = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-8"
+                transition={{ duration: 0.6 }}
+                className="mt-10"
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-xl font-semibold text-earth-800 mb-5">
                   Uploaded Files ({uploadedFiles.length})
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {uploadedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                    <motion.div 
+                      key={index} 
+                      className="flex items-center justify-between bg-earth-50/80 rounded-organic-lg p-4 border-2 border-earth-200 hover:border-sage-300 transition-all duration-300"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
                       <div className="flex items-center">
-                        <div className="text-2xl mr-3">🏃‍♂️</div>
+                        <div className="text-3xl mr-4">🏃‍♂️</div>
                         <div>
-                          <p className="font-medium text-gray-900">{file.name}</p>
-                          <p className="text-sm text-gray-500">
+                          <p className="font-medium text-earth-800">{file.name}</p>
+                          <p className="text-sm text-earth-600">
                             {(file.size / 1024).toFixed(1)} KB
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() => removeFile(index)}
-                        className="text-red-600 hover:text-red-800"
+                        className="text-terracotta-600 hover:text-terracotta-800 px-3 py-1 rounded-full hover:bg-terracotta-50 transition-all duration-300"
                       >
                         Remove
                       </button>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
                 
-                <div className="mt-6 text-center">
+                <div className="mt-8 text-center">
                   <button 
                     onClick={handleParseFiles}
                     disabled={isParsing}
-                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    className="inline-flex items-center px-10 py-4 border-2 border-transparent text-lg font-medium rounded-organic-lg text-white bg-moss-600 hover:bg-moss-700 disabled:bg-earth-300 disabled:cursor-not-allowed shadow-organic-lg hover:shadow-organic transform hover:scale-105 transition-all duration-300 disabled:transform-none"
                   >
                     {isParsing ? (
                       <>
@@ -437,7 +444,7 @@ const Upload = () => {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Parsing Files...
+                        Parsing...
                       </>
                     ) : (
                       <>
@@ -456,45 +463,52 @@ const Upload = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-8"
+                transition={{ duration: 0.6 }}
+                className="mt-10"
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-xl font-semibold text-earth-800 mb-5">
                   Parsed Results ({parsedData.length})
                 </h3>
                 <div className="space-y-4">
                   {parsedData.map((data, index) => (
-                    <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-green-800">{data.fileName}</h4>
-                        <span className="text-sm text-green-600">{data.tracks.length} track(s)</span>
+                    <motion.div 
+                      key={index} 
+                      className="bg-moss-50/80 border-2 border-moss-200 rounded-organic-lg p-6 hover:shadow-organic transition-all duration-300"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold text-moss-800 text-lg">{data.fileName}</h4>
+                        <span className="text-sm text-moss-600 bg-moss-100 px-3 py-1 rounded-full">{data.tracks.length} track(s)</span>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                          <span className="text-green-600 font-medium">Distance:</span>
-                          <p className="text-green-800">{formatDistance(data.totalDistance)}</p>
+                          <span className="text-moss-600 font-medium">Distance:</span>
+                          <p className="text-moss-800 font-semibold">{formatDistance(data.totalDistance)}</p>
                         </div>
                         <div>
-                          <span className="text-green-600 font-medium">Duration:</span>
-                          <p className="text-green-800">{formatDuration(data.totalDuration)}</p>
+                          <span className="text-moss-600 font-medium">Duration:</span>
+                          <p className="text-moss-800 font-semibold">{formatDuration(data.totalDuration)}</p>
                         </div>
                         <div>
-                          <span className="text-green-600 font-medium">Pace:</span>
-                          <p className="text-green-800">{formatPace(data.avgPace)}</p>
+                          <span className="text-moss-600 font-medium">Pace:</span>
+                          <p className="text-moss-800 font-semibold">{formatPace(data.avgPace)}</p>
                         </div>
                         <div>
-                          <span className="text-green-600 font-medium">Elevation:</span>
-                          <p className="text-green-800">{data.elevationGain.toFixed(0)}m</p>
+                          <span className="text-moss-600 font-medium">Elevation:</span>
+                          <p className="text-moss-800 font-semibold">{data.elevationGain.toFixed(0)}m</p>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
                 
-                <div className="mt-6 text-center">
-                  <p className="text-sm text-gray-600 mb-4">
+                <div className="mt-8 text-center">
+                  <p className="text-sm text-earth-600 mb-4">
                     Check the browser console for detailed parsing results
                   </p>
-                  <p className="text-sm text-green-600 mb-4">
+                  <p className="text-sm text-moss-600 mb-4 font-medium">
                     ✅ Files parsed successfully! Redirecting to analysis...
                   </p>
                 </div>

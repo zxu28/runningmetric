@@ -160,23 +160,23 @@ const Analysis = () => {
   // If no data, show error message
   if (parsedData.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-organic-gradient py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center py-16"
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center py-20"
           >
-            <div className="bg-red-50 border border-red-200 rounded-lg p-8 max-w-md mx-auto">
-              <div className="text-6xl mb-4">⚠️</div>
-              <h1 className="text-2xl font-bold text-red-800 mb-4">No Data Available</h1>
-              <p className="text-red-600 mb-6">
-                You haven't uploaded any GPX files yet. Please upload some running data to view your analysis.
+            <div className="bg-white/70 backdrop-blur-sm border-2 border-earth-200 rounded-organic-lg p-10 max-w-md mx-auto shadow-organic">
+              <div className="text-6xl mb-6 animate-float">🌱</div>
+              <h1 className="text-3xl font-bold text-earth-800 mb-4">No Runs Yet</h1>
+              <p className="text-earth-700 mb-8 leading-relaxed">
+                You haven't uploaded any GPX files yet. Let's get started—upload some running data to view your analysis.
               </p>
               <Link
                 to="/upload"
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+                className="inline-flex items-center px-8 py-4 text-base font-medium rounded-organic-lg text-white bg-sage-600 hover:bg-sage-700 shadow-organic-lg hover:shadow-organic transform hover:scale-105 transition-all duration-300"
               >
                 Upload GPX Files
                 <svg className="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -191,18 +191,18 @@ const Analysis = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-organic-gradient py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Running Analysis</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-earth-800 mb-10">Running Analysis</h1>
           
           {/* Search and Filter Bar */}
-          <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-            <div className="space-y-4">
+          <div className="bg-white/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-6 mb-8">
+            <div className="space-y-5">
               {/* Search */}
               <div className="flex-1">
                 <input
@@ -210,14 +210,14 @@ const Analysis = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search runs by name, tags, or notes..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-5 py-3 border-2 border-earth-200 rounded-organic focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 bg-white/80 text-earth-800 placeholder-earth-400 transition-all duration-300"
                 />
               </div>
               
               {/* Year Filters */}
               {allYears.length > 0 && (
-                <div className="flex flex-wrap gap-2 items-center">
-                  <span className="text-sm font-medium text-gray-700">Year:</span>
+                <div className="flex flex-wrap gap-3 items-center">
+                  <span className="text-sm font-medium text-earth-700">Year:</span>
                   {allYears.map(year => (
                     <button
                       key={year}
@@ -236,10 +236,10 @@ const Analysis = () => {
                         }
                         setSelectedYears(newSelected)
                       }}
-                      className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                      className={`px-4 py-2 text-sm rounded-full border-2 transition-all duration-300 ${
                         selectedYears.has(year)
-                          ? 'bg-purple-600 text-white border-purple-600'
-                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-purple-500'
+                          ? 'bg-moss-500 text-white border-moss-600 shadow-organic'
+                          : 'bg-earth-100 text-earth-700 border-earth-200 hover:border-moss-400 hover:bg-earth-50'
                       }`}
                     >
                       {year} {selectedYears.has(year) && '✓'}
@@ -250,8 +250,8 @@ const Analysis = () => {
               
               {/* Month Filters */}
               {allMonths.length > 0 && (
-                <div className="flex flex-wrap gap-2 items-center">
-                  <span className="text-sm font-medium text-gray-700">Month:</span>
+                <div className="flex flex-wrap gap-3 items-center">
+                  <span className="text-sm font-medium text-earth-700">Month:</span>
                   {allMonths.map(({ key, label }) => (
                     <button
                       key={key}
@@ -264,10 +264,10 @@ const Analysis = () => {
                         }
                         setSelectedMonths(newSelected)
                       }}
-                      className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                      className={`px-4 py-2 text-sm rounded-full border-2 transition-all duration-300 ${
                         selectedMonths.has(key)
-                          ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-indigo-500'
+                          ? 'bg-terracotta-500 text-white border-terracotta-600 shadow-organic'
+                          : 'bg-earth-100 text-earth-700 border-earth-200 hover:border-terracotta-400 hover:bg-earth-50'
                       }`}
                     >
                       {label} {selectedMonths.has(key) && '✓'}
@@ -278,8 +278,8 @@ const Analysis = () => {
               
               {/* Tag Filters */}
               {allTags.length > 0 && (
-                <div className="flex flex-wrap gap-2 items-center">
-                  <span className="text-sm font-medium text-gray-700">Tags:</span>
+                <div className="flex flex-wrap gap-3 items-center">
+                  <span className="text-sm font-medium text-earth-700">Tags:</span>
                   {allTags.map(tag => (
                     <button
                       key={tag}
@@ -292,10 +292,10 @@ const Analysis = () => {
                         }
                         setSelectedTags(newSelected)
                       }}
-                      className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                      className={`px-4 py-2 text-sm rounded-full border-2 transition-all duration-300 ${
                         selectedTags.has(tag)
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-blue-500'
+                          ? 'bg-sage-500 text-white border-sage-600 shadow-organic'
+                          : 'bg-earth-100 text-earth-700 border-earth-200 hover:border-sage-400 hover:bg-earth-50'
                       }`}
                     >
                       {tag} {selectedTags.has(tag) && '✓'}
@@ -306,7 +306,7 @@ const Analysis = () => {
               
               {/* Clear All Filters */}
               {(selectedTags.size > 0 || selectedYears.size > 0 || selectedMonths.size > 0 || searchQuery.trim()) && (
-                <div className="pt-2 border-t border-gray-200">
+                <div className="pt-4 border-t border-earth-200">
                   <button
                     onClick={() => {
                       setSelectedTags(new Set())
@@ -314,7 +314,7 @@ const Analysis = () => {
                       setSelectedMonths(new Set())
                       setSearchQuery('')
                     }}
-                    className="px-4 py-2 text-sm rounded-md bg-red-100 text-red-700 border border-red-300 hover:bg-red-200 transition-colors"
+                    className="px-5 py-2.5 text-sm rounded-organic bg-earth-200 text-earth-800 border-2 border-earth-300 hover:bg-earth-300 hover:border-earth-400 transition-all duration-300"
                   >
                     Clear All Filters
                   </button>
@@ -324,7 +324,7 @@ const Analysis = () => {
             
             {/* Results count */}
             {filteredRuns.length !== parsedData.length && (
-              <div className="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-600">
+              <div className="mt-5 pt-5 border-t border-earth-200 text-sm text-earth-600">
                 Showing {filteredRuns.length} of {parsedData.length} runs
               </div>
             )}
@@ -340,36 +340,48 @@ const Analysis = () => {
           <StatsOverview runs={displayRuns} />
           
           {/* Summary Cards */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Summary</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-blue-600">{totalRuns}</div>
-                <div className="text-sm text-blue-600">Total Runs</div>
-              </div>
-              <div className="bg-green-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-green-600">{formatDistance(totalDistance)}</div>
-                <div className="text-sm text-green-600">Total Distance</div>
-              </div>
-              <div className="bg-purple-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-purple-600">{formatPace(avgPace)}</div>
-                <div className="text-sm text-purple-600">Avg Pace (per mi)</div>
-              </div>
-              <div className="bg-orange-50 rounded-lg p-4">
-                <div className="text-2xl font-bold text-orange-600">{totalElevation.toFixed(0)}m</div>
-                <div className="text-sm text-orange-600">Elevation</div>
-              </div>
+          <div className="bg-white/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-8 mb-10">
+            <h2 className="text-2xl font-semibold text-earth-800 mb-6">Summary</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+              <motion.div 
+                className="bg-sage-50/80 rounded-organic-lg p-6 border-2 border-sage-200 hover:border-sage-300 transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="text-3xl font-bold text-sage-700">{totalRuns}</div>
+                <div className="text-sm text-sage-600 mt-1">Total Runs</div>
+              </motion.div>
+              <motion.div 
+                className="bg-moss-50/80 rounded-organic-lg p-6 border-2 border-moss-200 hover:border-moss-300 transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="text-3xl font-bold text-moss-700">{formatDistance(totalDistance)}</div>
+                <div className="text-sm text-moss-600 mt-1">Total Distance</div>
+              </motion.div>
+              <motion.div 
+                className="bg-terracotta-50/80 rounded-organic-lg p-6 border-2 border-terracotta-200 hover:border-terracotta-300 transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="text-3xl font-bold text-terracotta-700">{formatPace(avgPace)}</div>
+                <div className="text-sm text-terracotta-600 mt-1">Avg Pace (per mi)</div>
+              </motion.div>
+              <motion.div 
+                className="bg-earth-100/80 rounded-organic-lg p-6 border-2 border-earth-300 hover:border-earth-400 transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="text-3xl font-bold text-earth-700">{totalElevation.toFixed(0)}m</div>
+                <div className="text-sm text-earth-600 mt-1">Elevation</div>
+              </motion.div>
             </div>
           </div>
 
           {/* Calendar & Map Section */}
-          {parsedData.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Calendar & Map View</h2>
+          {parsedData.length > 0 && !showComparison && (
+            <div className="mb-10">
+              <h2 className="text-3xl font-semibold text-earth-800 mb-8">Calendar & Map View</h2>
               
-              <div className="grid lg:grid-cols-2 gap-6">
+              <div className="grid lg:grid-cols-2 gap-8">
                 {/* Left: Calendar */}
-                <div>
+                <div className="bg-white/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-6">
                   <RunCalendar 
                     runs={parsedData} 
                     selectedRun={selectedRun}
@@ -378,7 +390,7 @@ const Analysis = () => {
                 </div>
                 
                 {/* Right: Map and Details */}
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {selectedRun && (
                     <>
                       <RunDetails run={selectedRun} onUpdate={updateRun} />
@@ -404,20 +416,20 @@ const Analysis = () => {
                 key={`${run.fileName}-${run.startTime.getTime()}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="border rounded-lg bg-white shadow-md overflow-hidden"
+                transition={{ duration: 0.6, delay: index * 0.05 }}
+                className="border-2 border-earth-200 rounded-organic-lg bg-white/70 backdrop-blur-sm shadow-organic hover:shadow-organic-lg overflow-hidden transition-all duration-300"
               >
                 {/* Header - always visible */}
                 <div 
                   onClick={() => toggleRun(originalIndex)} 
-                  className="cursor-pointer p-4 hover:bg-gray-50 transition-colors"
+                  className="cursor-pointer p-6 hover:bg-earth-50/50 transition-all duration-300"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2 flex-wrap">
+                      <h3 className="text-xl font-semibold text-earth-800 flex items-center space-x-3 flex-wrap">
                         <span>Run {originalIndex + 1}: {run.fileName}</span>
                         {run.source === 'strava' && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-terracotta-100 text-terracotta-800 border border-terracotta-200">
                             <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.293l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
                             </svg>
@@ -426,11 +438,11 @@ const Analysis = () => {
                         )}
                         {/* Tags */}
                         {run.tags && run.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-2">
                             {run.tags.map(tag => (
                               <span
                                 key={tag}
-                                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-sage-100 text-sage-800 border border-sage-200"
                               >
                                 {tag}
                               </span>
@@ -438,17 +450,17 @@ const Analysis = () => {
                           </div>
                         )}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-earth-600 mt-2">
                         {run.startTime.toLocaleDateString()} • {run.source === 'strava' ? `${(run.totalDistance / 1609.34).toFixed(1)} miles` : `${run.splits.length} mile${run.splits.length !== 1 ? 's' : ''}`}
                       </p>
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="text-right text-sm">
-                        <div className="font-medium text-gray-900">{formatDistance(run.totalDistance)}</div>
-                        <div className="text-gray-600">{formatPace(run.avgPace)}</div>
+                        <div className="font-medium text-earth-800">{formatDistance(run.totalDistance)}</div>
+                        <div className="text-earth-600">{formatPace(run.avgPace)}</div>
                         {/* Debug: Show raw pace value */}
                         {run.source === 'strava' && (
-                          <div className="text-xs text-gray-400">
+                          <div className="text-xs text-earth-400">
                             Raw pace: {run.avgPace.toFixed(2)} min/mi
                           </div>
                         )}

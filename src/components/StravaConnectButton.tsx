@@ -93,26 +93,27 @@ const StravaConnectButton: React.FC<StravaConnectButtonProps> = ({ onSync }) => 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-md p-6"
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="bg-white/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-8"
         >
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
             {/* Strava Logo */}
-            <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold">
+            <div className="w-14 h-14 bg-terracotta-500 rounded-organic-lg flex items-center justify-center text-white font-bold text-xl shadow-organic">
               S
             </div>
             <div>
-              <div className="font-semibold text-gray-900">
+              <div className="font-semibold text-earth-800 text-lg">
                 Connected to Strava
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-earth-600">
                 {tokens.athleteName}
               </div>
             </div>
           </div>
           <button
             onClick={handleDisconnect}
-            className="text-sm text-red-600 hover:text-red-700 hover:underline"
+            className="text-sm text-terracotta-600 hover:text-terracotta-800 px-4 py-2 rounded-full hover:bg-terracotta-50 transition-all duration-300"
           >
             Disconnect
           </button>
@@ -122,11 +123,11 @@ const StravaConnectButton: React.FC<StravaConnectButtonProps> = ({ onSync }) => 
           <button
             onClick={handleSync}
             disabled={isSyncing}
-            className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="flex-1 px-6 py-4 bg-terracotta-500 text-white rounded-organic-lg hover:bg-terracotta-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium shadow-organic-lg hover:shadow-organic transform hover:scale-105 disabled:transform-none"
           >
             {isSyncing ? (
               <span className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
                 Syncing...
               </span>
             ) : (
@@ -143,26 +144,27 @@ const StravaConnectButton: React.FC<StravaConnectButtonProps> = ({ onSync }) => 
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg shadow-md p-6 text-white"
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="bg-gradient-to-r from-terracotta-500 to-terracotta-600 rounded-organic-lg shadow-organic-lg p-8 text-white"
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold mb-1">Connect with Strava</h3>
-          <p className="text-orange-100 text-sm">
+          <h3 className="text-2xl font-bold mb-2">Connect with Strava</h3>
+          <p className="text-terracotta-50 text-base">
             Sync your activities automatically
           </p>
         </div>
-        <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-3xl font-bold">
+        <div className="w-20 h-20 bg-white bg-opacity-20 rounded-organic-lg flex items-center justify-center text-4xl font-bold backdrop-blur-sm">
           S
         </div>
       </div>
       
       <button
         onClick={handleConnect}
-        className="w-full px-6 py-3 bg-white text-orange-600 rounded-md hover:bg-orange-50 transition-colors font-semibold flex items-center justify-center space-x-2"
+        className="w-full px-8 py-4 bg-white text-terracotta-600 rounded-organic-lg hover:bg-terracotta-50 transition-all duration-300 font-semibold flex items-center justify-center space-x-3 shadow-organic-lg hover:shadow-organic transform hover:scale-105"
       >
         <span>Connect Now</span>
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
         </svg>
       </button>

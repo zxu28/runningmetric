@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-leaflet'
 import { motion } from 'framer-motion'
 import L from 'leaflet'
@@ -22,12 +22,43 @@ interface RunMapProps {
   run: GPXData
 }
 
-// Component to update map when run changes
+// Component to update map when run changes - with debouncing to prevent shaking
 function MapUpdater({ bounds }: { bounds: L.LatLngBounds }) {
   const map = useMap()
+  const boundsRef = useRef<L.LatLngBounds | null>(null)
+  const isUpdatingRef = useRef(false)
+  
   useEffect(() => {
-    map.fitBounds(bounds, { padding: [20, 20] })
+    // Only update if bounds have actually changed
+    if (boundsRef.current && boundsRef.current.equals(bounds)) {
+      return
+    }
+    
+    // Prevent multiple simultaneous updates
+    if (isUpdatingRef.current) {
+      return
+    }
+    
+    isUpdatingRef.current = true
+    boundsRef.current = bounds
+    
+    // Use requestAnimationFrame to ensure map is ready
+    requestAnimationFrame(() => {
+      try {
+        map.fitBounds(bounds, { 
+          padding: [20, 20],
+          animate: false // Disable animation to prevent shaking
+        })
+      } catch (error) {
+        console.warn('Map bounds update failed:', error)
+      } finally {
+        setTimeout(() => {
+          isUpdatingRef.current = false
+        }, 100)
+      }
+    })
   }, [bounds, map])
+  
   return null
 }
 
@@ -82,29 +113,61 @@ const RunMap: React.FC<RunMapProps> = ({ run }) => {
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null)
   const [showElevationProfile, setShowElevationProfile] = useState(false)
   
-  // Get all points from tracks
-  const allPoints: GPXPoint[] = []
-  run.tracks.forEach(track => {
-    allPoints.push(...track.points)
-  })
-  allPoints.sort((a, b) => a.time.getTime() - b.time.getTime())
-  
-  const coordinates = extractCoordinates(run)
-  const bounds = calculateBounds(coordinates)
-
-  // Calculate pace segments for color-coding
-  const getPaceSegments = () => {
-    if (allPoints.length < 2) return coordinates.map(() => '#3b82f6')
+  // Memoize calculations to prevent unnecessary re-renders
+  const { allPoints, coordinates, bounds, startPoint, endPoint, paceSegments, elevationData } = useMemo(() => {
+    // Get all points from tracks
+    const points: GPXPoint[] = []
+    run.tracks.forEach(track => {
+      points.push(...track.points)
+    })
+    points.sort((a, b) => a.time.getTime() - b.time.getTime())
     
-    const segments: string[] = []
-    for (let i = 0; i < allPoints.length - 1; i++) {
-      const pointData = getPointData(allPoints, i)
-      segments.push(pointData ? getColorForPace(pointData.pace) : '#3b82f6')
+    const coords = extractCoordinates(run)
+    const calculatedBounds = calculateBounds(coords)
+    
+    // Calculate pace segments for color-coding
+    const getPaceSegments = () => {
+      if (points.length < 2) return coords.map(() => '#3b82f6')
+      
+      const segments: string[] = []
+      for (let i = 0; i < points.length - 1; i++) {
+        const pointData = getPointData(points, i)
+        segments.push(pointData ? getColorForPace(pointData.pace) : '#3b82f6')
+      }
+      return segments
     }
-    return segments
-  }
-
-  const paceSegments = getPaceSegments()
+    
+    const segments = getPaceSegments()
+    const start = coords[0]
+    const end = coords[coords.length - 1]
+    
+    // Calculate elevation profile data
+    const elevation = points.map((point, index) => ({
+      distance: index * (run.totalDistance / points.length),
+      elevation: point.elevation || 0
+    }))
+    
+    return {
+      allPoints: points,
+      coordinates: coords,
+      bounds: calculatedBounds,
+      startPoint: start,
+      endPoint: end,
+      paceSegments: segments,
+      elevationData: elevation
+    }
+  }, [run])
+  
+  const hoveredData = hoveredPoint !== null ? getPointData(allPoints, hoveredPoint) : null
+  
+  // Stable key for map container
+  const mapKey = useMemo(() => `${run.fileName}-${run.startTime.getTime()}`, [run.fileName, run.startTime])
+  
+  // Convert bounds to LatLngBounds only once
+  const leafletBounds = useMemo(() => {
+    if (!bounds || bounds.length === 0) return null
+    return L.latLngBounds(bounds)
+  }, [bounds])
 
   if (coordinates.length === 0) {
     return (
@@ -112,11 +175,11 @@ const RunMap: React.FC<RunMapProps> = ({ run }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white rounded-lg shadow-md p-6"
+        className="bg-white/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-6"
       >
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Route Map</h3>
+        <h3 className="text-lg font-semibold text-earth-800 mb-4">Route Map</h3>
         <div className="h-64 flex items-center justify-center">
-          <div className="text-center text-gray-500">
+          <div className="text-center text-earth-600">
             <div className="text-4xl mb-2">🗺️</div>
             <p>No GPS data available</p>
             <p className="text-sm">This run doesn't contain GPS coordinates</p>
@@ -126,33 +189,22 @@ const RunMap: React.FC<RunMapProps> = ({ run }) => {
     )
   }
 
-  const startPoint = coordinates[0]
-  const endPoint = coordinates[coordinates.length - 1]
-  
-  // Calculate elevation profile data
-  const elevationData = allPoints.map((point, index) => ({
-    distance: index * (run.totalDistance / allPoints.length),
-    elevation: point.elevation || 0
-  }))
-
-  const hoveredData = hoveredPoint !== null ? getPointData(allPoints, hoveredPoint) : null
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="bg-white rounded-lg shadow-md p-6"
+      className="bg-white/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-6"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Route Map</h3>
+        <h3 className="text-lg font-semibold text-earth-800">Route Map</h3>
         <div className="flex gap-2">
           <button
             onClick={() => setShowElevationProfile(!showElevationProfile)}
-            className={`px-3 py-1 text-xs rounded-md transition-colors ${
+            className={`px-3 py-1 text-xs rounded-organic transition-all duration-300 ${
               showElevationProfile
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-sage-600 text-white'
+                : 'bg-earth-100 text-earth-700 hover:bg-earth-200'
             }`}
           >
             {showElevationProfile ? 'Hide' : 'Show'} Elevation
@@ -160,93 +212,110 @@ const RunMap: React.FC<RunMapProps> = ({ run }) => {
         </div>
       </div>
       
-      <div className="h-96 rounded-lg overflow-hidden relative">
-        <MapContainer
-          bounds={bounds}
-          style={{ height: '100%', width: '100%' }}
-          scrollWheelZoom={true}
-          attributionControl={true}
-          key={`${run.fileName}-${run.startTime.getTime()}`}
-        >
-          <MapUpdater bounds={L.latLngBounds(bounds)} />
-          
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          />
-          
-          {/* Route polyline with color coding - optimized for performance */}
-          {coordinates.length <= 500 ? (
-            // Color-coded segments for smaller routes
-            coordinates.map((coord, index) => {
-              if (index === 0) return null
-              const prevCoord = coordinates[index - 1]
-              const color = paceSegments[index - 1] || '#3b82f6'
-              
-              return (
-                <Polyline
-                  key={index}
-                  positions={[prevCoord, coord]}
-                  color={color}
-                  weight={4}
-                  opacity={0.8}
-                  eventHandlers={{
-                    mouseover: () => setHoveredPoint(index),
-                    mouseout: () => setHoveredPoint(null)
-                  }}
-                />
-              )
-            })
-          ) : (
-            // Single polyline for large routes (performance optimization)
-            <Polyline
-              positions={coordinates}
-              color="#3b82f6"
-              weight={4}
-              opacity={0.8}
+      <div className="h-96 rounded-lg overflow-hidden relative z-0">
+        {leafletBounds && (
+          <MapContainer
+            bounds={leafletBounds}
+            style={{ height: '100%', width: '100%', zIndex: 0 }}
+            scrollWheelZoom={true}
+            attributionControl={true}
+            key={mapKey}
+            whenCreated={(mapInstance) => {
+              // Prevent map from resetting on scroll
+              mapInstance.on('moveend', () => {
+                // Store current view state
+              })
+            }}
+          >
+            <MapUpdater bounds={leafletBounds} />
+            
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              updateWhenZooming={false}
+              updateWhenIdle={true}
             />
-          )}
-          
-          {/* Start marker */}
-          <Marker position={startPoint}>
-            <Popup>
-              <div className="text-center">
-                <div className="font-semibold text-green-600 mb-1">🏁 Start</div>
-                <div className="text-xs text-gray-600 mb-1">
-                  {run.startTime.toLocaleTimeString()}
-                </div>
-                {allPoints[0] && (
-                  <div className="text-xs text-gray-500">
-                    Elevation: {(allPoints[0].elevation || 0).toFixed(0)}m
+            
+            {/* Route polyline with color coding - optimized for performance */}
+            {coordinates.length <= 500 ? (
+              // Color-coded segments for smaller routes
+              coordinates.map((coord, index) => {
+                if (index === 0) return null
+                const prevCoord = coordinates[index - 1]
+                const color = paceSegments[index - 1] || '#3b82f6'
+                
+                return (
+                  <Polyline
+                    key={`polyline-${index}`}
+                    positions={[prevCoord, coord]}
+                    color={color}
+                    weight={4}
+                    opacity={0.8}
+                    eventHandlers={{
+                      mouseover: () => setHoveredPoint(index),
+                      mouseout: () => setHoveredPoint(null)
+                    }}
+                  />
+                )
+              })
+            ) : (
+              // Single polyline for large routes (performance optimization)
+              <Polyline
+                key="polyline-single"
+                positions={coordinates}
+                color="#3b82f6"
+                weight={4}
+                opacity={0.8}
+              />
+            )}
+            
+            {/* Start marker */}
+            <Marker 
+              key="start-marker"
+              position={startPoint}
+            >
+              <Popup>
+                <div className="text-center">
+                  <div className="font-semibold text-green-600 mb-1">🏁 Start</div>
+                  <div className="text-xs text-gray-600 mb-1">
+                    {run.startTime.toLocaleTimeString()}
                   </div>
-                )}
-              </div>
-            </Popup>
-          </Marker>
-          
-          {/* End marker */}
-          <Marker position={endPoint}>
-            <Popup>
-              <div className="text-center">
-                <div className="font-semibold text-red-600 mb-1">🏁 Finish</div>
-                <div className="text-xs text-gray-600 mb-1">
-                  {run.endTime.toLocaleTimeString()}
+                  {allPoints[0] && (
+                    <div className="text-xs text-gray-500">
+                      Elevation: {(allPoints[0].elevation || 0).toFixed(0)}m
+                    </div>
+                  )}
                 </div>
-                {allPoints[allPoints.length - 1] && (
-                  <div className="text-xs text-gray-500">
-                    Elevation: {(allPoints[allPoints.length - 1].elevation || 0).toFixed(0)}m
+              </Popup>
+            </Marker>
+            
+            {/* End marker */}
+            <Marker 
+              key="end-marker"
+              position={endPoint}
+            >
+              <Popup>
+                <div className="text-center">
+                  <div className="font-semibold text-red-600 mb-1">🏁 Finish</div>
+                  <div className="text-xs text-gray-600 mb-1">
+                    {run.endTime.toLocaleTimeString()}
                   </div>
-                )}
-              </div>
-            </Popup>
-          </Marker>
-        </MapContainer>
+                  {allPoints[allPoints.length - 1] && (
+                    <div className="text-xs text-gray-500">
+                      Elevation: {(allPoints[allPoints.length - 1].elevation || 0).toFixed(0)}m
+                    </div>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          </MapContainer>
+        )}
         
         {/* Hover tooltip */}
         {hoveredData && hoveredPoint !== null && (
-          <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3 z-[1000] border border-gray-200">
-            <div className="text-xs font-semibold text-gray-900 mb-1">Point {hoveredPoint + 1}</div>
-            <div className="text-xs text-gray-600 space-y-1">
+          <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-3 z-[1000] border border-earth-200">
+            <div className="text-xs font-semibold text-earth-800 mb-1">Point {hoveredPoint + 1}</div>
+            <div className="text-xs text-earth-600 space-y-1">
               <div>Elevation: {hoveredData.elevation.toFixed(0)}m</div>
               {hoveredData.pace > 0 && (
                 <div>Pace: {hoveredData.pace.toFixed(1)} min/mi</div>
