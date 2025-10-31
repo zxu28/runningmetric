@@ -11,15 +11,29 @@ A modern, privacy-first web application for analyzing running data from GPX file
 ##  Features
 
 - ** GPX File Upload**: Drag & drop multiple GPX files with validation
-- ** Strava Integration**: Connect to Strava and sync your running activities
+- ** Strava Integration**: Connect to Strava and sync your running activities with real-time progress tracking
 - ** Data Analysis**: Distance, pace, elevation, and duration calculations
 - ** Privacy-First**: All data stays in your browser - no cloud storage
 - ** Modern UI**: Responsive design with smooth animations
 - ** Visualizations**: Summary stats, recent runs, and performance charts
 - ** Running Calendar**: Visual calendar showing your running history
-- ** Interactive Maps**: Route visualization with Leaflet maps
+- ** Enhanced Interactive Maps**: 
+  - Color-coded route visualization by pace zones
+  - Elevation profile with toggle
+  - Interactive tooltips showing elevation, pace, and time at any point
+  - Route heatmap visualization
+- ** Run Tagging & Notes**: 
+  - Add custom tags to organize runs (Race, Trail, Tempo, etc.)
+  - Add personal notes to each run
+  - Filter runs by tags
+- ** Advanced Filtering**: 
+  - Filter by year, month, tags, or search query
+  - Multiple filters work simultaneously
+  - Smart filter clearing
 - ** Best Efforts Tracking**: Personal records for 1 mile, 5K, 10K, and longest run
 - ** Run Comparison**: Side-by-side comparison of different runs
+- ** Progress Tracking**: Real-time sync progress with activity names and stages
+- ** Smart Storage**: Automatic data optimization to prevent localStorage quota issues
 
 ##  Live Website
 
@@ -46,21 +60,24 @@ src/
 │   ├── PacePerMileChart.tsx    # Per-mile pace visualization
 │   ├── ElevationChart.tsx      # Elevation profile chart
 │   ├── RunCalendar.tsx         # Running calendar
-│   ├── RunMap.tsx             # Interactive route maps
+│   ├── RunMap.tsx             # Enhanced interactive route maps with pace visualization
+│   ├── RunDetails.tsx         # Run details panel with tags and notes
+│   ├── TagManager.tsx         # Tag and notes management component
+│   ├── SyncProgress.tsx        # Real-time sync progress indicator
 │   ├── BestEffortsGrid.tsx    # Personal records display
 │   ├── RunComparison.tsx      # Run comparison modal
-│   └── StravaConnectButton.tsx # Strava OAuth integration
+│   └── StravaConnectButton.tsx # Strava OAuth integration with progress tracking
 ├── contexts/           # React context providers
-│   └── DataContext.tsx # Global state management
+│   └── DataContext.tsx # Global state management with updateRun and storage optimization
 ├── pages/              # Main application pages
 │   ├── Home.tsx        # Landing page
-│   ├── Upload.tsx      # File upload interface
-│   ├── Analysis.tsx    # Data analysis dashboard
+│   ├── Upload.tsx      # File upload interface with enhanced sync
+│   ├── Analysis.tsx     # Data analysis dashboard with advanced filtering
 │   └── StravaCallback.tsx # Strava OAuth callback handler
 ├── services/           # External API services
 │   └── stravaService.ts # Strava OAuth and API integration
 ├── utils/              # Utility functions
-│   ├── gpxParser.ts    # GPX parsing and calculations
+│   ├── gpxParser.ts    # GPX parsing and calculations (with tags/notes support)
 │   ├── runHelpers.ts   # Run data manipulation
 │   ├── metrics.ts      # Best efforts calculations
 │   ├── trendAnalysis.ts # Weekly/monthly trend analysis
@@ -125,6 +142,74 @@ Strava API has rate limits:
 - **Read Operations**: 1,000 requests per hour
 
 If you hit the limit, wait 1 hour for the quota to reset.
+
+## ✨ Recent Updates & Improvements
+
+### 🆕 New Features
+
+1. **Enhanced Interactive Maps**
+   - Color-coded routes by pace zones (red=faster, blue=slower)
+   - Elevation profile toggle
+   - Interactive tooltips showing elevation, pace, and timestamp on hover
+   - Performance optimized for large routes
+
+2. **Run Tagging System**
+   - Add custom tags to organize runs (Race, Trail, Tempo, Long Run, etc.)
+   - Add personal notes to each run
+   - Filter runs by tags
+   - Predefined tags with custom tag support
+
+3. **Advanced Filtering**
+   - Filter by year, month, tags, or search query
+   - Multiple filters work simultaneously
+   - Month filtering for precise date-based searches
+   - Smart filter clearing
+
+4. **Real-Time Progress Tracking**
+   - Visual progress indicator during Strava sync
+   - Shows fetching/processing/saving stages
+   - Displays current activity being processed
+   - Progress bar with percentage and counts
+
+### 🐛 Issues Solved
+
+1. **Slow Sync Performance**
+   - ✅ Added rate limiting (250ms delay between requests)
+   - ✅ Early duplicate detection to skip already-synced activities
+   - ✅ Optimized API call sequence
+
+2. **Duplicate Prevention**
+   - ✅ Three-layer duplicate prevention system
+   - ✅ Early filtering before processing
+   - ✅ Final check before adding to storage
+   - ✅ Data layer filtering in `addParsedData`
+
+3. **localStorage Quota Issues**
+   - ✅ Automatic data optimization (reduces GPS points for old runs)
+   - ✅ Smart quota management with warnings
+   - ✅ Automatic retry with further optimization if quota exceeded
+   - ✅ Better error messages with actionable steps
+
+4. **Loading Experience**
+   - ✅ Real-time progress updates instead of "zero activities" message
+   - ✅ Visual progress indicator with stages
+   - ✅ Activity names shown during processing
+   - ✅ Clear status messages
+
+### 📁 New Files
+
+- `src/components/SyncProgress.tsx` - Real-time sync progress component
+- `src/components/TagManager.tsx` - Tag and notes management component
+
+### 🔄 Enhanced Files
+
+- `src/components/RunMap.tsx` - Added color-coded pace visualization and interactive tooltips
+- `src/components/RunDetails.tsx` - Added tag and notes display/editing
+- `src/components/StravaConnectButton.tsx` - Added progress tracking integration
+- `src/pages/Analysis.tsx` - Added year/month filtering and search
+- `src/pages/Upload.tsx` - Added progress callbacks and improved sync flow
+- `src/contexts/DataContext.tsx` - Added `updateRun` function and storage optimization
+- `src/utils/gpxParser.ts` - Added `tags` and `notes` fields to `GPXData` interface
 
 ##  Deployment
 
