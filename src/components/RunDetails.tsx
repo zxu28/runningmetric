@@ -2,12 +2,14 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { GPXData } from '../utils/gpxParser'
 import { formatDistance, formatPace, formatDuration } from '../utils/gpxParser'
+import TagManager from './TagManager'
 
 interface RunDetailsProps {
   run: GPXData
+  onUpdate?: (updatedRun: GPXData) => void
 }
 
-const RunDetails: React.FC<RunDetailsProps> = ({ run }) => {
+const RunDetails: React.FC<RunDetailsProps> = ({ run, onUpdate }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -87,6 +89,13 @@ const RunDetails: React.FC<RunDetailsProps> = ({ run }) => {
           </div>
         </div>
       </div>
+
+      {/* Tags and Notes */}
+      {onUpdate && (
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <TagManager run={run} onUpdate={onUpdate} />
+        </div>
+      )}
     </motion.div>
   )
 }

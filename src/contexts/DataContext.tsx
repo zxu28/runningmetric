@@ -5,6 +5,7 @@ interface DataContextType {
   parsedData: GPXData[]
   setParsedData: (data: GPXData[]) => void
   addParsedData: (data: GPXData[]) => void
+  updateRun: (updatedRun: GPXData) => void
   clearData: () => void
   clearAllData: () => void
   removeDuplicates: () => void
@@ -102,12 +103,52 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
 
   const addParsedData = (newData: GPXData[]) => {
     setParsedData(prevData => {
-      const updatedData = [...prevData, ...newData]
+      // Filter out duplicates before adding
+      // For Strava activities: check by stravaId
+      // For GPX files: check by fileName + startTime (since same file could be uploaded multiple times)
+      const existingStravaIds = new Set(
+        prevData
+          .filter(item => item.source === 'strava' && item.stravaId !== undefined)
+          .map(item => item.stravaId as number)
+      )
+      
+      const existingGpxFiles = new Set(
+        prevData
+          .filter(item => item.source !== 'strava')
+          .map(item => `${item.fileName}_${item.startTime.getTime()}`)
+      )
+      
+      // Filter new data to remove duplicates
+      const uniqueNewData = newData.filter(item => {
+        if (item.source === 'strava' && item.stravaId) {
+          if (existingStravaIds.has(item.stravaId)) {
+            console.log(`Skipping duplicate Strava activity: ${item.fileName} (ID: ${item.stravaId})`)
+            return false
+          }
+          return true
+        } else {
+          // For GPX files, check by fileName + startTime
+          const key = `${item.fileName}_${item.startTime.getTime()}`
+          if (existingGpxFiles.has(key)) {
+            console.log(`Skipping duplicate GPX file: ${item.fileName}`)
+            return false
+          }
+          return true
+        }
+      })
+      
+      if (uniqueNewData.length < newData.length) {
+        const skippedCount = newData.length - uniqueNewData.length
+        console.log(`⚠️ Filtered out ${skippedCount} duplicate(s) before adding`)
+      }
+      
+      const updatedData = [...prevData, ...uniqueNewData]
       
       // Debug: Check what we're about to save
       console.log('Saving to localStorage:', {
         totalRuns: updatedData.length,
-        newRuns: newData.length,
+        newRuns: uniqueNewData.length,
+        duplicatesSkipped: newData.length - uniqueNewData.length,
         sampleRun: {
           fileName: updatedData[updatedData.length - 1]?.fileName,
           source: updatedData[updatedData.length - 1]?.source,
@@ -141,6 +182,37 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
           }
         }
       }
+      return updatedData
+    })
+  }
+
+  // Update a single run (for tags, notes, etc.)
+  const updateRun = (updatedRun: GPXData) => {
+    setParsedData(prevData => {
+      // Find the run to update - match by stravaId if available, otherwise by fileName + startTime
+      const updatedData = prevData.map(run => {
+        if (updatedRun.source === 'strava' && updatedRun.stravaId) {
+          if (run.source === 'strava' && run.stravaId === updatedRun.stravaId) {
+            return updatedRun
+          }
+        } else {
+          // Match by fileName + startTime for GPX files
+          if (run.fileName === updatedRun.fileName && 
+              run.startTime.getTime() === updatedRun.startTime.getTime()) {
+            return updatedRun
+          }
+        }
+        return run
+      })
+      
+      // Save to localStorage
+      try {
+        localStorage.setItem('runningData', JSON.stringify(updatedData))
+        console.log('Updated run:', updatedRun.fileName)
+      } catch (error) {
+        console.error('Failed to save updated run:', error)
+      }
+      
       return updatedData
     })
   }
@@ -210,6 +282,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     parsedData,
     setParsedData,
     addParsedData,
+    updateRun,
     clearData,
     clearAllData,
     removeDuplicates

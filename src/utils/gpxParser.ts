@@ -42,6 +42,8 @@ export interface GPXData {
   splits: MileSplit[];       // NEW: Per-mile split data
   source?: 'gpx' | 'strava'  // NEW: Track data source
   stravaId?: number          // NEW: Strava activity ID
+  tags?: string[]             // NEW: User-defined tags for runs
+  notes?: string              // NEW: User notes for runs
 }
 
 // Haversine formula to calculate distance between two points

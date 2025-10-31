@@ -16,21 +16,62 @@ import StatsOverview from '../components/StatsOverview'
 import RunComparison from '../components/RunComparison'
 
 const Analysis = () => {
-  const { parsedData, removeDuplicates, clearAllData } = useDataContext()
+  const { parsedData, removeDuplicates, clearAllData, updateRun } = useDataContext()
   const [expandedRuns, setExpandedRuns] = useState<Set<number>>(new Set())
   const [selectedRun, setSelectedRun] = useState<GPXData | null>(
     parsedData.length > 0 ? getMostRecentRun(parsedData) : null
   )
   const [showComparison, setShowComparison] = useState(false)
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
+  const [selectedYears, setSelectedYears] = useState<Set<number>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
   
   // Use best efforts hook
   const { bestEfforts, newPRs, clearNewPRs } = useBestEfforts(parsedData)
+  
+  // Get all unique tags from runs
+  const allTags = Array.from(new Set(
+    parsedData.flatMap(run => run.tags || [])
+  )).sort()
+  
+  // Get all unique years from runs (sorted descending)
+  const allYears = Array.from(new Set(
+    parsedData.map(run => run.startTime.getFullYear())
+  )).sort((a, b) => b - a) // Most recent first
+  
+  // Filter runs based on selected tags, years, and search query
+  const filteredRuns = parsedData.filter(run => {
+    // Filter by tags
+    if (selectedTags.size > 0) {
+      const runTags = run.tags || []
+      const hasSelectedTag = Array.from(selectedTags).some(tag => runTags.includes(tag))
+      if (!hasSelectedTag) return false
+    }
+    
+    // Filter by year
+    if (selectedYears.size > 0) {
+      const runYear = run.startTime.getFullYear()
+      if (!selectedYears.has(runYear)) return false
+    }
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      const matchesName = run.fileName.toLowerCase().includes(query)
+      const matchesNotes = run.notes?.toLowerCase().includes(query) || false
+      const matchesTags = run.tags?.some(tag => tag.toLowerCase().includes(query)) || false
+      if (!matchesName && !matchesNotes && !matchesTags) return false
+    }
+    
+    return true
+  })
 
-  // Calculate summary statistics
-  const totalRuns = parsedData.length
-  const totalDistance = parsedData.reduce((sum, run) => sum + run.totalDistance, 0)
-  const totalElevation = parsedData.reduce((sum, run) => sum + run.elevationGain, 0)
-  const avgPace = totalRuns > 0 ? parsedData.reduce((sum, run) => sum + run.avgPace, 0) / totalRuns : 0
+  // Calculate summary statistics (use filtered runs if filters are active)
+  const displayRuns = filteredRuns.length < parsedData.length ? filteredRuns : parsedData
+  const totalRuns = displayRuns.length
+  const totalDistance = displayRuns.reduce((sum, run) => sum + run.totalDistance, 0)
+  const totalElevation = displayRuns.reduce((sum, run) => sum + run.elevationGain, 0)
+  const avgPace = totalRuns > 0 ? displayRuns.reduce((sum, run) => sum + run.avgPace, 0) / totalRuns : 0
 
   const toggleRun = (index: number) => {
     const newExpanded = new Set(expandedRuns)
@@ -127,6 +168,101 @@ const Analysis = () => {
         >
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Running Analysis</h1>
           
+          {/* Search and Filter Bar */}
+          <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div className="space-y-4">
+              {/* Search */}
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search runs by name, tags, or notes..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              
+              {/* Year Filters */}
+              {allYears.length > 0 && (
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-sm font-medium text-gray-700">Year:</span>
+                  {allYears.map(year => (
+                    <button
+                      key={year}
+                      onClick={() => {
+                        const newSelected = new Set(selectedYears)
+                        if (newSelected.has(year)) {
+                          newSelected.delete(year)
+                        } else {
+                          newSelected.add(year)
+                        }
+                        setSelectedYears(newSelected)
+                      }}
+                      className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                        selectedYears.has(year)
+                          ? 'bg-purple-600 text-white border-purple-600'
+                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-purple-500'
+                      }`}
+                    >
+                      {year} {selectedYears.has(year) && '✓'}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {/* Tag Filters */}
+              {allTags.length > 0 && (
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-sm font-medium text-gray-700">Tags:</span>
+                  {allTags.map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => {
+                        const newSelected = new Set(selectedTags)
+                        if (newSelected.has(tag)) {
+                          newSelected.delete(tag)
+                        } else {
+                          newSelected.add(tag)
+                        }
+                        setSelectedTags(newSelected)
+                      }}
+                      className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                        selectedTags.has(tag)
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-blue-500'
+                      }`}
+                    >
+                      {tag} {selectedTags.has(tag) && '✓'}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {/* Clear All Filters */}
+              {(selectedTags.size > 0 || selectedYears.size > 0 || searchQuery.trim()) && (
+                <div className="pt-2 border-t border-gray-200">
+                  <button
+                    onClick={() => {
+                      setSelectedTags(new Set())
+                      setSelectedYears(new Set())
+                      setSearchQuery('')
+                    }}
+                    className="px-4 py-2 text-sm rounded-md bg-red-100 text-red-700 border border-red-300 hover:bg-red-200 transition-colors"
+                  >
+                    Clear All Filters
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            {/* Results count */}
+            {filteredRuns.length !== parsedData.length && (
+              <div className="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-600">
+                Showing {filteredRuns.length} of {parsedData.length} runs
+              </div>
+            )}
+          </div>
+          
           {/* PR Badge Notification */}
           <PRBadge prTypes={newPRs} onDismiss={clearNewPRs} />
           
@@ -134,7 +270,7 @@ const Analysis = () => {
           <BestEffortsGrid bestEfforts={bestEfforts} />
           
           {/* Stats Overview / Trend Charts */}
-          <StatsOverview runs={parsedData} />
+          <StatsOverview runs={displayRuns} />
           
           {/* Summary Cards */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -178,7 +314,7 @@ const Analysis = () => {
                 <div className="space-y-4">
                   {selectedRun && (
                     <>
-                      <RunDetails run={selectedRun} />
+                      <RunDetails run={selectedRun} onUpdate={updateRun} />
                       <RunMap run={selectedRun} />
                     </>
                   )}
@@ -189,9 +325,16 @@ const Analysis = () => {
 
           {/* Individual Run Sections */}
           <div className="space-y-6">
-            {parsedData.map((run, index) => (
+            {filteredRuns.map((run, index) => {
+              // Find original index for expanded state
+              const originalIndex = parsedData.findIndex(r => 
+                run.source === 'strava' && run.stravaId 
+                  ? r.source === 'strava' && r.stravaId === run.stravaId
+                  : r.fileName === run.fileName && r.startTime.getTime() === run.startTime.getTime()
+              )
+              return (
               <motion.div
-                key={index}
+                key={`${run.fileName}-${run.startTime.getTime()}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
@@ -199,13 +342,13 @@ const Analysis = () => {
               >
                 {/* Header - always visible */}
                 <div 
-                  onClick={() => toggleRun(index)} 
+                  onClick={() => toggleRun(originalIndex)} 
                   className="cursor-pointer p-4 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                        <span>Run {index + 1}: {run.fileName}</span>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2 flex-wrap">
+                        <span>Run {originalIndex + 1}: {run.fileName}</span>
                         {run.source === 'strava' && (
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                             <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -213,6 +356,19 @@ const Analysis = () => {
                             </svg>
                             Strava
                           </span>
+                        )}
+                        {/* Tags */}
+                        {run.tags && run.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {run.tags.map(tag => (
+                              <span
+                                key={tag}
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </h3>
                       <p className="text-sm text-gray-600">
@@ -231,7 +387,7 @@ const Analysis = () => {
                         )}
                       </div>
                       <motion.div
-                        animate={{ rotate: expandedRuns.has(index) ? 180 : 0 }}
+                        animate={{ rotate: expandedRuns.has(originalIndex) ? 180 : 0 }}
                         transition={{ duration: 0.2 }}
                         className="text-gray-400"
                       >
@@ -245,7 +401,7 @@ const Analysis = () => {
                 
                 {/* Expanded content */}
                 <AnimatePresence>
-                  {expandedRuns.has(index) && (
+                  {expandedRuns.has(originalIndex) && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
@@ -261,7 +417,8 @@ const Analysis = () => {
                   )}
                 </AnimatePresence>
               </motion.div>
-            ))}
+            )
+            })}
           </div>
 
           {/* Call to Action */}

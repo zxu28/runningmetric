@@ -18,22 +18,52 @@ const Upload = () => {
   const handleStravaSync = async () => {
     try {
       console.log('Starting Strava sync...')
+      
+      // Check for duplicates early to avoid unnecessary API calls
+      const existingData = JSON.parse(localStorage.getItem('runningData') || '[]')
+      const existingStravaIds = new Set(
+        existingData
+          .filter((item: any) => item.source === 'strava')
+          .map((item: any) => item.stravaId)
+      )
+      console.log(`Found ${existingStravaIds.size} already-synced activities in localStorage`)
+      
       const activities = await stravaService.fetchAllActivities() // Fetch ALL activities using pagination
       console.log(`\n📊 SYNC SUMMARY:`)
       console.log(`Fetched ${activities.length} total activities from Strava`)
       console.log('Activity names:', activities.map(a => a.name))
       
+      // Filter out already-synced activities before processing
+      const newActivities = activities.filter(activity => !existingStravaIds.has(activity.id))
+      console.log(`Skipping ${activities.length - newActivities.length} already-synced activities`)
+      console.log(`Processing ${newActivities.length} new activities`)
+      
+      if (newActivities.length === 0) {
+        alert(`All Strava activities are already synced! (Fetched ${activities.length}, but all were duplicates)`)
+        return
+      }
+      
       const stravaData: GPXData[] = []
       
       // Process each activity with detailed streams
-      for (const activity of activities) {
+      // Add delay between requests to respect rate limits (Strava: 600 requests per 15 minutes)
+      // ~250ms delay = ~240 requests per minute = safe margin
+      const DELAY_BETWEEN_REQUESTS = 250 // milliseconds
+      
+      for (let i = 0; i < newActivities.length; i++) {
+        const activity = newActivities[i]
         try {
-          const currentIndex = activities.indexOf(activity) + 1
-          console.log(`\n=== Processing activity ${currentIndex}/${activities.length}: ${activity.name} (ID: ${activity.id}) ===`)
+          const currentIndex = i + 1
+          console.log(`\n=== Processing activity ${currentIndex}/${newActivities.length}: ${activity.name} (ID: ${activity.id}) ===`)
+          
+          // Add delay before each request (except the first one)
+          if (i > 0) {
+            await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_REQUESTS))
+          }
           
           // Fetch detailed streams for this activity
           // Note: Each activity requires 2 API calls (activity + streams)
-          // For large datasets, this can hit rate limits. Consider batching or delays if needed.
+          // Rate limiting: 250ms delay = ~240 requests/min = safe margin under 600/15min limit
           console.log('Fetching detailed streams...')
           const { activity: detailedActivity, streams } = await stravaService.fetchActivityWithStreams(activity.id)
           
@@ -116,52 +146,46 @@ const Upload = () => {
         console.warn('  - No activities fetched from Strava')
         console.warn('  - All activities failed validation/conversion')
         console.warn('  - Error occurred during stream fetching')
+        alert('No activities were successfully processed. Check console for details.')
+        return
       }
       console.log('Converted Strava activities:', stravaData.map(a => ({ name: a.fileName, id: a.stravaId })))
       
-      // Check for duplicates before adding
-      const existingData = JSON.parse(localStorage.getItem('runningData') || '[]')
-      const existingStravaIds = existingData
-        .filter((item: any) => item.source === 'strava')
-        .map((item: any) => item.stravaId)
-      
-      console.log(`\nExisting Strava IDs in localStorage: ${existingStravaIds.length}`, existingStravaIds)
-      
-      // Filter out activities that already exist
-      const newActivities = stravaData.filter(activity => 
-        !existingStravaIds.includes(activity.stravaId)
+      // Double-check for duplicates (safety check in case something changed)
+      const finalNewActivities = stravaData.filter(activity => 
+        !existingStravaIds.has(activity.stravaId)
       )
       
-      console.log(`New activities to add: ${newActivities.length}`)
-      console.log('New activity names:', newActivities.map(a => a.fileName))
+      console.log(`New activities to add: ${finalNewActivities.length}`)
+      console.log('New activity names:', finalNewActivities.map(a => a.fileName))
       
-      if (newActivities.length === 0) {
+      if (finalNewActivities.length === 0) {
         console.log('No new activities to sync')
-        alert(`All Strava activities are already synced! (Fetched ${stravaData.length}, but all were duplicates)`)
-        // Don't return early - let function complete normally
-      } else {
-        // Add only new activities to DataContext
-        console.log('Adding to DataContext:', newActivities.length, 'activities')
-        addParsedData(newActivities)
-        
-        // Wait a moment for data to be saved to localStorage
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
-        // Verify data was saved
-        const savedData = localStorage.getItem('runningData')
-        if (savedData) {
-          const parsed = JSON.parse(savedData)
-          console.log('✅ Verified data in localStorage:', parsed.length, 'total activities')
-        } else {
-          console.error('❌ No data found in localStorage after adding!')
-        }
-        
-        const activitiesWithStreams = newActivities.filter(a => a.tracks[0].points.length > 0).length
-        alert(`Successfully synced ${newActivities.length} activities from Strava! ${activitiesWithStreams} have detailed GPS data. Check the Analysis page to view them.`)
-        
-        // Navigate using React Router instead of window.location for proper state preservation
-        navigate('/analysis')
+        alert(`All processed activities are already synced! (Processed ${stravaData.length}, but all were duplicates)`)
+        return
       }
+      
+      // Add only new activities to DataContext
+      console.log('Adding to DataContext:', finalNewActivities.length, 'activities')
+      addParsedData(finalNewActivities)
+      
+      // Wait a moment for data to be saved to localStorage
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Verify data was saved
+      const savedData = localStorage.getItem('runningData')
+      if (savedData) {
+        const parsed = JSON.parse(savedData)
+        console.log('✅ Verified data in localStorage:', parsed.length, 'total activities')
+      } else {
+        console.error('❌ No data found in localStorage after adding!')
+      }
+      
+      const activitiesWithStreams = finalNewActivities.filter(a => a.tracks[0].points.length > 0).length
+      alert(`Successfully synced ${finalNewActivities.length} activities from Strava! ${activitiesWithStreams} have detailed GPS data. Check the Analysis page to view them.`)
+      
+      // Navigate using React Router instead of window.location for proper state preservation
+      navigate('/analysis')
       
       console.log('✅ Sync process completed successfully')
       
