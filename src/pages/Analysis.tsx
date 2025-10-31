@@ -24,6 +24,7 @@ const Analysis = () => {
   const [showComparison, setShowComparison] = useState(false)
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
   const [selectedYears, setSelectedYears] = useState<Set<number>>(new Set())
+  const [selectedMonths, setSelectedMonths] = useState<Set<string>>(new Set()) // Format: "YYYY-MM"
   const [searchQuery, setSearchQuery] = useState('')
   
   // Use best efforts hook
@@ -39,7 +40,30 @@ const Analysis = () => {
     parsedData.map(run => run.startTime.getFullYear())
   )).sort((a, b) => b - a) // Most recent first
   
-  // Filter runs based on selected tags, years, and search query
+  // Get all unique year-month combinations
+  const yearMonthMap = new Map<string, { year: number; month: number; label: string }>()
+  parsedData.forEach(run => {
+    const year = run.startTime.getFullYear()
+    const month = run.startTime.getMonth()
+    const key = `${year}-${String(month + 1).padStart(2, '0')}`
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    if (!yearMonthMap.has(key)) {
+      yearMonthMap.set(key, {
+        year,
+        month,
+        label: `${monthNames[month]} ${year}`
+      })
+    }
+  })
+  const allMonths = Array.from(yearMonthMap.entries())
+    .sort((a, b) => {
+      // Sort by year descending, then month descending
+      if (a[1].year !== b[1].year) return b[1].year - a[1].year
+      return b[1].month - a[1].month
+    })
+    .map(([key, value]) => ({ key, ...value }))
+  
+  // Filter runs based on selected tags, years, months, and search query
   const filteredRuns = parsedData.filter(run => {
     // Filter by tags
     if (selectedTags.size > 0) {
@@ -52,6 +76,14 @@ const Analysis = () => {
     if (selectedYears.size > 0) {
       const runYear = run.startTime.getFullYear()
       if (!selectedYears.has(runYear)) return false
+    }
+    
+    // Filter by month (YYYY-MM format)
+    if (selectedMonths.size > 0) {
+      const runYear = run.startTime.getFullYear()
+      const runMonth = String(run.startTime.getMonth() + 1).padStart(2, '0')
+      const monthKey = `${runYear}-${runMonth}`
+      if (!selectedMonths.has(monthKey)) return false
     }
     
     // Filter by search query
@@ -193,6 +225,12 @@ const Analysis = () => {
                         const newSelected = new Set(selectedYears)
                         if (newSelected.has(year)) {
                           newSelected.delete(year)
+                          // Also clear month selections for this year
+                          const newMonths = new Set(selectedMonths)
+                          allMonths.forEach(m => {
+                            if (m.year === year) newMonths.delete(m.key)
+                          })
+                          setSelectedMonths(newMonths)
                         } else {
                           newSelected.add(year)
                         }
@@ -205,6 +243,34 @@ const Analysis = () => {
                       }`}
                     >
                       {year} {selectedYears.has(year) && '✓'}
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {/* Month Filters */}
+              {allMonths.length > 0 && (
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-sm font-medium text-gray-700">Month:</span>
+                  {allMonths.map(({ key, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        const newSelected = new Set(selectedMonths)
+                        if (newSelected.has(key)) {
+                          newSelected.delete(key)
+                        } else {
+                          newSelected.add(key)
+                        }
+                        setSelectedMonths(newSelected)
+                      }}
+                      className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                        selectedMonths.has(key)
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-indigo-500'
+                      }`}
+                    >
+                      {label} {selectedMonths.has(key) && '✓'}
                     </button>
                   ))}
                 </div>
@@ -239,12 +305,13 @@ const Analysis = () => {
               )}
               
               {/* Clear All Filters */}
-              {(selectedTags.size > 0 || selectedYears.size > 0 || searchQuery.trim()) && (
+              {(selectedTags.size > 0 || selectedYears.size > 0 || selectedMonths.size > 0 || searchQuery.trim()) && (
                 <div className="pt-2 border-t border-gray-200">
                   <button
                     onClick={() => {
                       setSelectedTags(new Set())
                       setSelectedYears(new Set())
+                      setSelectedMonths(new Set())
                       setSearchQuery('')
                     }}
                     className="px-4 py-2 text-sm rounded-md bg-red-100 text-red-700 border border-red-300 hover:bg-red-200 transition-colors"

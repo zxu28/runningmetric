@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { parseMultipleGPXFiles, formatDistance, formatDuration, formatPace, GPXData } from '../utils/gpxParser'
 import { useDataContext } from '../contexts/DataContext'
-import StravaConnectButton from '../components/StravaConnectButton'
+import StravaConnectButton, { SyncProgressInfo } from '../components/StravaConnectButton'
 import { stravaService } from '../services/stravaService'
 import { convertStravaActivityToGPXData, validateStravaStreams } from '../utils/stravaConverter'
 
@@ -15,9 +15,17 @@ const Upload = () => {
   const [parsedData, setParsedData] = useState<GPXData[]>([])
   const [isParsing, setIsParsing] = useState(false)
 
-  const handleStravaSync = async () => {
+  const handleStravaSync = async (progressCallback?: (progress: SyncProgressInfo) => void) => {
     try {
       console.log('Starting Strava sync...')
+      
+      // Update progress: Fetching stage
+      progressCallback?.({
+        stage: 'fetching',
+        current: 0,
+        total: 0,
+        message: 'Fetching activities list from Strava...'
+      })
       
       // Check for duplicates early to avoid unnecessary API calls
       const existingData = JSON.parse(localStorage.getItem('runningData') || '[]')
@@ -33,6 +41,14 @@ const Upload = () => {
       console.log(`Fetched ${activities.length} total activities from Strava`)
       console.log('Activity names:', activities.map(a => a.name))
       
+      // Update progress: Show fetched count
+      progressCallback?.({
+        stage: 'fetching',
+        current: activities.length,
+        total: activities.length,
+        message: `Found ${activities.length} activities from Strava`
+      })
+      
       // Filter out already-synced activities before processing
       const newActivities = activities.filter(activity => !existingStravaIds.has(activity.id))
       console.log(`Skipping ${activities.length - newActivities.length} already-synced activities`)
@@ -45,6 +61,14 @@ const Upload = () => {
       
       const stravaData: GPXData[] = []
       
+      // Update progress: Processing stage
+      progressCallback?.({
+        stage: 'processing',
+        current: 0,
+        total: newActivities.length,
+        message: `Processing ${newActivities.length} new activities...`
+      })
+      
       // Process each activity with detailed streams
       // Add delay between requests to respect rate limits (Strava: 600 requests per 15 minutes)
       // ~250ms delay = ~240 requests per minute = safe margin
@@ -54,6 +78,16 @@ const Upload = () => {
         const activity = newActivities[i]
         try {
           const currentIndex = i + 1
+          
+          // Update progress
+          progressCallback?.({
+            stage: 'processing',
+            current: currentIndex,
+            total: newActivities.length,
+            currentActivity: activity.name,
+            message: `Processing ${currentIndex} of ${newActivities.length}...`
+          })
+          
           console.log(`\n=== Processing activity ${currentIndex}/${newActivities.length}: ${activity.name} (ID: ${activity.id}) ===`)
           
           // Add delay before each request (except the first one)
@@ -164,6 +198,14 @@ const Upload = () => {
         alert(`All processed activities are already synced! (Processed ${stravaData.length}, but all were duplicates)`)
         return
       }
+      
+      // Update progress: Saving stage
+      progressCallback?.({
+        stage: 'saving',
+        current: finalNewActivities.length,
+        total: finalNewActivities.length,
+        message: `Saving ${finalNewActivities.length} activities to browser storage...`
+      })
       
       // Add only new activities to DataContext
       console.log('Adding to DataContext:', finalNewActivities.length, 'activities')

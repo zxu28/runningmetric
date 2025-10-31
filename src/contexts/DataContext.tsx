@@ -158,27 +158,75 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         }
       })
       
+      // Optimize data before saving to reduce localStorage usage
+      const optimizedData = updatedData.map(run => {
+        // For runs with many GPS points, keep only essential data
+        // Reduce point density for old runs (>30 days old)
+        const isOld = (Date.now() - run.startTime.getTime()) > 30 * 24 * 60 * 60 * 1000
+        if (isOld && run.tracks.length > 0) {
+          const optimizedTracks = run.tracks.map(track => {
+            // Keep every 10th point for old runs to reduce storage
+            if (track.points.length > 100) {
+              const optimizedPoints = track.points.filter((_, index) => index % 10 === 0 || index === track.points.length - 1)
+              return { ...track, points: optimizedPoints }
+            }
+            return track
+          })
+          return { ...run, tracks: optimizedTracks }
+        }
+        return run
+      })
+      
       // Save to localStorage with proper serialization
       try {
-        const dataStr = JSON.stringify(updatedData)
-        console.log(`Attempting to save ${dataStr.length} bytes to localStorage`)
+        const dataStr = JSON.stringify(optimizedData)
+        const dataSizeMB = (dataStr.length / 1024 / 1024).toFixed(2)
+        console.log(`Attempting to save ${dataStr.length} bytes (${dataSizeMB} MB) to localStorage`)
+        
+        // Check localStorage quota before saving
+        const quotaEstimate = 5 * 1024 * 1024 // ~5MB typical limit
+        if (dataStr.length > quotaEstimate * 0.9) {
+          console.warn(`⚠️ Warning: Data size (${dataSizeMB} MB) is approaching localStorage limit`)
+        }
+        
         localStorage.setItem('runningData', dataStr)
         console.log('Successfully saved to localStorage')
       } catch (error) {
         console.error('Failed to save to localStorage:', error instanceof Error ? error.message : 'Unknown error')
-        // If localStorage is full, try to clear some old data
+        // If localStorage is full, try to optimize and save
         if (error instanceof Error && error.name === 'QuotaExceededError') {
           console.warn('⚠️ localStorage QUOTA EXCEEDED!')
-          console.warn('  This means you have too much data stored')
-          console.warn('  Solution: Clear old data or reduce number of activities synced')
-          console.log('localStorage full, attempting to clear and save...')
+          console.warn(`  Data size: ${(JSON.stringify(updatedData).length / 1024 / 1024).toFixed(2)} MB`)
+          console.warn('  Attempting to optimize data by reducing GPS point density...')
+          
           try {
+            // Further optimize: reduce point density even more
+            const heavilyOptimized = updatedData.map(run => {
+              const optimizedTracks = run.tracks.map(track => {
+                if (track.points.length > 50) {
+                  // Keep every 20th point for heavily optimized runs
+                  const optimizedPoints = track.points.filter((_, index) => index % 20 === 0 || index === track.points.length - 1)
+                  return { ...track, points: optimizedPoints }
+                }
+                return track
+              })
+              return { ...run, tracks: optimizedTracks }
+            })
+            
+            const optimizedStr = JSON.stringify(heavilyOptimized)
+            const optimizedSizeMB = (optimizedStr.length / 1024 / 1024).toFixed(2)
+            console.log(`Optimized data size: ${optimizedSizeMB} MB`)
+            
             localStorage.removeItem('runningData')
-            localStorage.setItem('runningData', JSON.stringify(updatedData))
-            console.log('Successfully recovered from quota error')
+            localStorage.setItem('runningData', optimizedStr)
+            console.log('✅ Successfully saved optimized data')
+            
+            // Show user-friendly message
+            alert(`Storage space was getting full, so some GPS point detail was reduced to save space. Your data is now ${optimizedSizeMB} MB.`)
           } catch (retryError) {
-            console.error('❌ Cannot save even after clearing:', retryError)
-            alert('Cannot save data: localStorage is full. Please clear some browser data.')
+            console.error('❌ Cannot save even after optimization:', retryError)
+            alert(`Browser storage is full (${updatedData.length} runs). Please:\n\n1. Clear old runs using the "Clear All Data" button\n2. Or sync fewer activities at once\n\nYour data is safe but not saved yet.`)
+            throw retryError
           }
         }
       }

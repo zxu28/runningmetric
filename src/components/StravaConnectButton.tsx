@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { stravaService, StravaTokens } from '../services/stravaService'
+import SyncProgress from './SyncProgress'
+
+export interface SyncProgressInfo {
+  stage: 'fetching' | 'processing' | 'saving'
+  current: number
+  total: number
+  currentActivity?: string
+  message?: string
+}
 
 interface StravaConnectButtonProps {
-  onSync?: () => void
+  onSync?: (progressCallback?: (progress: SyncProgressInfo) => void) => Promise<void>
 }
 
 const StravaConnectButton: React.FC<StravaConnectButtonProps> = ({ onSync }) => {
   const [isConnected, setIsConnected] = useState(false)
   const [tokens, setTokens] = useState<StravaTokens | null>(null)
   const [isSyncing, setIsSyncing] = useState(false)
+  const [syncProgress, setSyncProgress] = useState<SyncProgressInfo | null>(null)
 
   useEffect(() => {
     // Check connection status
@@ -34,37 +44,57 @@ const StravaConnectButton: React.FC<StravaConnectButtonProps> = ({ onSync }) => 
 
   const handleSync = async () => {
     setIsSyncing(true)
+    setSyncProgress({
+      stage: 'fetching',
+      current: 0,
+      total: 0,
+      message: 'Connecting to Strava...'
+    })
     console.log('🔄 Sync started')
     
-    // Safety timeout - clear loading after 5 minutes max
+    // Safety timeout - clear loading after 10 minutes max
     const timeout = setTimeout(() => {
-      console.warn('⚠️ Sync timeout - clearing loading state after 5 minutes')
+      console.warn('⚠️ Sync timeout - clearing loading state after 10 minutes')
       setIsSyncing(false)
+      setSyncProgress(null)
       alert('Sync is taking longer than expected. Please check the console for errors or try again.')
-    }, 5 * 60 * 1000) // 5 minutes
+    }, 10 * 60 * 1000) // 10 minutes
     
     try {
       if (onSync) {
-        await onSync()
+        await onSync((progress) => {
+          setSyncProgress(progress)
+        })
         console.log('✅ Sync completed successfully')
       }
     } catch (error) {
       console.error('❌ Sync error:', error)
+      setSyncProgress(null)
       alert('Failed to sync activities. Please try again.')
     } finally {
       clearTimeout(timeout)
       setIsSyncing(false)
+      setSyncProgress(null)
       console.log('🔚 Sync finished - loading state cleared')
     }
   }
 
   if (isConnected && tokens) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-lg shadow-md p-6"
-      >
+      <>
+        <SyncProgress
+          isVisible={!!syncProgress}
+          stage={syncProgress?.stage || 'fetching'}
+          current={syncProgress?.current || 0}
+          total={syncProgress?.total || 0}
+          currentActivity={syncProgress?.currentActivity}
+          message={syncProgress?.message}
+        />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-lg shadow-md p-6"
+        >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             {/* Strava Logo */}
@@ -105,6 +135,7 @@ const StravaConnectButton: React.FC<StravaConnectButtonProps> = ({ onSync }) => 
           </button>
         </div>
       </motion.div>
+      </>
     )
   }
 
