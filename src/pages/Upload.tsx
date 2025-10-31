@@ -55,7 +55,27 @@ const Upload = () => {
       console.log(`Processing ${newActivities.length} new activities`)
       
       if (newActivities.length === 0) {
-        alert(`All Strava activities are already synced! (Fetched ${activities.length}, but all were duplicates)`)
+        // Clear progress indicator
+        progressCallback?.({
+          stage: 'fetching',
+          current: activities.length,
+          total: activities.length,
+          message: activities.length > 0 
+            ? `All ${activities.length} activities are already synced!`
+            : 'No new activities to sync.'
+        })
+        
+        // Wait a moment for the message to show, then clear
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        
+        if (activities.length === 0) {
+          alert('No running activities found in your Strava account. Make sure you have running activities synced to Strava.')
+        } else {
+          const message = `All ${activities.length} Strava activities are already synced!\n\nWould you like to view your runs on the Analysis page?`
+          if (confirm(message)) {
+            navigate('/analysis')
+          }
+        }
         return
       }
       
