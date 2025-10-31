@@ -165,7 +165,7 @@ const RunMap: React.FC<RunMapProps> = ({ run }) => {
   
   // Convert bounds to LatLngBounds only once
   const leafletBounds = useMemo(() => {
-    if (!bounds || bounds.length === 0) return null
+    if (!bounds || !Array.isArray(bounds) || bounds.length !== 2) return null
     return L.latLngBounds(bounds)
   }, [bounds])
 
@@ -220,12 +220,6 @@ const RunMap: React.FC<RunMapProps> = ({ run }) => {
             scrollWheelZoom={true}
             attributionControl={true}
             key={mapKey}
-            whenCreated={(mapInstance) => {
-              // Prevent map from resetting on scroll
-              mapInstance.on('moveend', () => {
-                // Store current view state
-              })
-            }}
           >
             <MapUpdater bounds={leafletBounds} />
             

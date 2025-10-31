@@ -8,16 +8,39 @@ const Home = () => {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
           className="absolute top-20 left-10 w-64 h-64 bg-sage-200/30 rounded-full blur-3xl"
-          animate={{ flow: true }}
+          animate={{
+            y: [0, -20, 0],
+            rotate: [0, 5, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
         />
         <motion.div
           className="absolute bottom-20 right-10 w-80 h-80 bg-earth-200/30 rounded-full blur-3xl"
-          animate={{ flow: true }}
-          style={{ animationDelay: '2s' }}
+          animate={{
+            y: [0, -20, 0],
+            rotate: [0, 5, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2
+          }}
         />
         <motion.div
           className="absolute top-1/2 left-1/3 w-48 h-48 bg-moss-200/20 rounded-full blur-2xl"
-          animate={{ float: true }}
+          animate={{
+            y: [0, -10, 0],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
         />
       </div>
 
@@ -30,7 +53,14 @@ const Home = () => {
           >
             <motion.h1 
               className="text-5xl md:text-7xl font-bold text-earth-800 mb-6"
-              animate={{ float: true }}
+              animate={{
+                y: [0, -10, 0],
+              }}
+              transition={{
+                duration: 6,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
             >
               🏃‍♂️ Running Metrics
             </motion.h1>
