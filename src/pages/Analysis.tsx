@@ -26,14 +26,63 @@ const Analysis = () => {
   const [selectedYears, setSelectedYears] = useState<Set<number>>(new Set())
   const [selectedMonths, setSelectedMonths] = useState<Set<string>>(new Set()) // Format: "YYYY-MM"
   const [searchQuery, setSearchQuery] = useState('')
+  const [customTags, setCustomTags] = useState<string[]>([]) // Manually added filter tags
+  const [newTagInput, setNewTagInput] = useState('')
+  
+  // Load custom tags from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('customFilterTags')
+    if (stored) {
+      try {
+        const tags = JSON.parse(stored)
+        if (Array.isArray(tags)) {
+          // Normalize tags: trim whitespace and remove empty strings
+          const normalizedTags = tags
+            .map(tag => typeof tag === 'string' ? tag.trim() : String(tag).trim())
+            .filter(tag => tag.length > 0)
+          // Remove duplicates (case-insensitive)
+          const uniqueTags = Array.from(new Set(
+            normalizedTags.map(tag => tag.toLowerCase())
+          )).map(lowerTag => {
+            // Find the original case version
+            const originalTag = normalizedTags.find(t => t.toLowerCase() === lowerTag)
+            return originalTag || lowerTag
+          })
+          setCustomTags(uniqueTags)
+        } else {
+          setCustomTags([])
+        }
+      } catch (error) {
+        console.error('Failed to load custom tags:', error)
+        setCustomTags([])
+      }
+    }
+  }, [])
+  
+  // Save custom tags to localStorage whenever they change
+  useEffect(() => {
+    try {
+      if (customTags.length > 0) {
+        localStorage.setItem('customFilterTags', JSON.stringify(customTags))
+      } else {
+        // Only remove if we previously had tags
+        if (localStorage.getItem('customFilterTags')) {
+          localStorage.removeItem('customFilterTags')
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save custom tags:', error)
+    }
+  }, [customTags])
   
   // Use best efforts hook
   const { bestEfforts, newPRs, clearNewPRs } = useBestEfforts(parsedData)
   
-  // Get all unique tags from runs
-  const allTags = Array.from(new Set(
+  // Get all unique tags from runs and combine with custom tags
+  const runTags = Array.from(new Set(
     parsedData.flatMap(run => run.tags || [])
-  )).sort()
+  ))
+  const allTags = Array.from(new Set([...runTags, ...customTags])).sort()
   
   // Get all unique years from runs (sorted descending)
   const allYears = Array.from(new Set(
@@ -67,8 +116,8 @@ const Analysis = () => {
   const filteredRuns = parsedData.filter(run => {
     // Filter by tags
     if (selectedTags.size > 0) {
-      const runTags = run.tags || []
-      const hasSelectedTag = Array.from(selectedTags).some(tag => runTags.includes(tag))
+      const currentRunTags = run.tags || []
+      const hasSelectedTag = Array.from(selectedTags).some(tag => currentRunTags.includes(tag))
       if (!hasSelectedTag) return false
     }
     
@@ -115,11 +164,77 @@ const Analysis = () => {
     setExpandedRuns(newExpanded)
   }
 
+  const handleAddCustomTag = () => {
+    const trimmed = newTagInput.trim()
+    // Prevent adding if it already exists (case-insensitive)
+    const alreadyExists = customTags.some(ct => ct.trim().toLowerCase() === trimmed.toLowerCase()) ||
+                         runTags.some(rt => rt.trim().toLowerCase() === trimmed.toLowerCase())
+    if (trimmed && !alreadyExists) {
+      setCustomTags([...customTags, trimmed])
+      setNewTagInput('')
+    } else if (alreadyExists) {
+      alert(`Tag "${trimmed}" already exists as a filter tag or is used in your runs.`)
+    }
+  }
+
+  const handleDeleteCustomTag = (tagToDelete: string) => {
+    console.log('Deleting tag:', tagToDelete)
+    console.log('Current customTags:', customTags)
+    
+    // Use case-insensitive comparison to handle any case mismatches
+    // Also trim whitespace to handle any whitespace issues
+    const trimmedTagToDelete = tagToDelete.trim()
+    const updatedTags = customTags.filter(tag => {
+      const trimmedTag = tag.trim()
+      const matches = trimmedTag.toLowerCase() !== trimmedTagToDelete.toLowerCase()
+      if (!matches) {
+        console.log(`Removing tag: "${tag}" (matched "${tagToDelete}")`)
+      }
+      return matches
+    })
+    
+    console.log('Updated tags after deletion:', updatedTags)
+    console.log('Tags removed:', customTags.length - updatedTags.length)
+    
+    // Force update by creating a new array reference
+    setCustomTags([...updatedTags])
+    
+    // Also remove from selected tags if it was selected (case-insensitive)
+    const newSelected = new Set(selectedTags)
+    let removedFromSelected = false
+    Array.from(newSelected).forEach(tag => {
+      if (tag.trim().toLowerCase() === trimmedTagToDelete.toLowerCase()) {
+        newSelected.delete(tag)
+        removedFromSelected = true
+      }
+    })
+    if (removedFromSelected) {
+      setSelectedTags(newSelected)
+    }
+    
+    // Force localStorage update immediately
+    try {
+      if (updatedTags.length > 0) {
+        localStorage.setItem('customFilterTags', JSON.stringify(updatedTags))
+      } else {
+        localStorage.removeItem('customFilterTags')
+      }
+      console.log('localStorage updated successfully')
+    } catch (error) {
+      console.error('Failed to update localStorage:', error)
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleAddCustomTag()
+    }
+  }
+
   const handleSelectRun = (run: GPXData) => {
     setSelectedRun(run)
   }
-
-  // Debug: Log localStorage data and context state
   useEffect(() => {
     console.log('📊 Analysis Page - Data State Check:')
     console.log('- parsedData from context:', parsedData.length, 'items')
@@ -218,33 +333,59 @@ const Analysis = () => {
               {allYears.length > 0 && (
                 <div className="flex flex-wrap gap-3 items-center">
                   <span className="text-sm font-medium text-earth-700">Year:</span>
-                  {allYears.map(year => (
-                    <button
-                      key={year}
-                      onClick={() => {
-                        const newSelected = new Set(selectedYears)
-                        if (newSelected.has(year)) {
-                          newSelected.delete(year)
-                          // Also clear month selections for this year
-                          const newMonths = new Set(selectedMonths)
-                          allMonths.forEach(m => {
-                            if (m.year === year) newMonths.delete(m.key)
-                          })
-                          setSelectedMonths(newMonths)
-                        } else {
-                          newSelected.add(year)
-                        }
-                        setSelectedYears(newSelected)
-                      }}
-                      className={`px-4 py-2 text-sm rounded-full border-2 transition-all duration-300 ${
-                        selectedYears.has(year)
-                          ? 'bg-moss-500 text-white border-moss-600 shadow-organic'
-                          : 'bg-earth-100 text-earth-700 border-earth-200 hover:border-moss-400 hover:bg-earth-50'
-                      }`}
-                    >
-                      {year} {selectedYears.has(year) && '✓'}
-                    </button>
-                  ))}
+                  {allYears.map(year => {
+                    const isSelected = selectedYears.has(year)
+                    return (
+                      <div key={year} className="flex items-center gap-1 group">
+                        <button
+                          onClick={() => {
+                            const newSelected = new Set(selectedYears)
+                            if (newSelected.has(year)) {
+                              newSelected.delete(year)
+                              // Also clear month selections for this year
+                              const newMonths = new Set(selectedMonths)
+                              allMonths.forEach(m => {
+                                if (m.year === year) newMonths.delete(m.key)
+                              })
+                              setSelectedMonths(newMonths)
+                            } else {
+                              newSelected.add(year)
+                            }
+                            setSelectedYears(newSelected)
+                          }}
+                          className={`px-4 py-2 text-sm rounded-full border-2 transition-all duration-300 flex items-center gap-2 ${
+                            isSelected
+                              ? 'bg-moss-500 text-white border-moss-600 shadow-organic'
+                              : 'bg-earth-100 text-earth-700 border-earth-200 hover:border-moss-400 hover:bg-earth-50'
+                          }`}
+                        >
+                          {year} {isSelected && '✓'}
+                        </button>
+                        {/* Remove from filter button for selected years */}
+                        {isSelected && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              e.preventDefault()
+                              const newSelected = new Set(selectedYears)
+                              newSelected.delete(year)
+                              setSelectedYears(newSelected)
+                              // Also clear month selections for this year
+                              const newMonths = new Set(selectedMonths)
+                              allMonths.forEach(m => {
+                                if (m.year === year) newMonths.delete(m.key)
+                              })
+                              setSelectedMonths(newMonths)
+                            }}
+                            className="opacity-100 w-6 h-6 flex items-center justify-center rounded-full bg-earth-300 text-earth-800 hover:bg-earth-400 transition-all duration-300 text-xs font-bold"
+                            title="Remove from filters"
+                          >
+                            ⊗
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
               
@@ -252,57 +393,181 @@ const Analysis = () => {
               {allMonths.length > 0 && (
                 <div className="flex flex-wrap gap-3 items-center">
                   <span className="text-sm font-medium text-earth-700">Month:</span>
-                  {allMonths.map(({ key, label }) => (
-                    <button
-                      key={key}
-                      onClick={() => {
-                        const newSelected = new Set(selectedMonths)
-                        if (newSelected.has(key)) {
-                          newSelected.delete(key)
-                        } else {
-                          newSelected.add(key)
-                        }
-                        setSelectedMonths(newSelected)
-                      }}
-                      className={`px-4 py-2 text-sm rounded-full border-2 transition-all duration-300 ${
-                        selectedMonths.has(key)
-                          ? 'bg-terracotta-500 text-white border-terracotta-600 shadow-organic'
-                          : 'bg-earth-100 text-earth-700 border-earth-200 hover:border-terracotta-400 hover:bg-earth-50'
-                      }`}
-                    >
-                      {label} {selectedMonths.has(key) && '✓'}
-                    </button>
-                  ))}
+                  {allMonths.map(({ key, label }) => {
+                    const isSelected = selectedMonths.has(key)
+                    return (
+                      <div key={key} className="flex items-center gap-1 group">
+                        <button
+                          onClick={() => {
+                            const newSelected = new Set(selectedMonths)
+                            if (newSelected.has(key)) {
+                              newSelected.delete(key)
+                            } else {
+                              newSelected.add(key)
+                              // Auto-select the year if not already selected
+                              if (!selectedYears.has(allMonths.find(m => m.key === key)?.year || 0)) {
+                                const monthYear = allMonths.find(m => m.key === key)?.year || 0
+                                setSelectedYears(new Set([...selectedYears, monthYear]))
+                              }
+                            }
+                            setSelectedMonths(newSelected)
+                          }}
+                          className={`px-4 py-2 text-sm rounded-full border-2 transition-all duration-300 flex items-center gap-2 ${
+                            isSelected
+                              ? 'bg-terracotta-500 text-white border-terracotta-600 shadow-organic'
+                              : 'bg-earth-100 text-earth-700 border-earth-200 hover:border-terracotta-400 hover:bg-earth-50'
+                          }`}
+                        >
+                          {label} {isSelected && '✓'}
+                        </button>
+                        {/* Remove from filter button for selected months */}
+                        {isSelected && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              e.preventDefault()
+                              const newSelected = new Set(selectedMonths)
+                              newSelected.delete(key)
+                              setSelectedMonths(newSelected)
+                            }}
+                            className="opacity-100 w-6 h-6 flex items-center justify-center rounded-full bg-earth-300 text-earth-800 hover:bg-earth-400 transition-all duration-300 text-xs font-bold"
+                            title="Remove from filters"
+                          >
+                            ⊗
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
               
               {/* Tag Filters */}
-              {allTags.length > 0 && (
-                <div className="flex flex-wrap gap-3 items-center">
-                  <span className="text-sm font-medium text-earth-700">Tags:</span>
-                  {allTags.map(tag => (
-                    <button
-                      key={tag}
-                      onClick={() => {
-                        const newSelected = new Set(selectedTags)
-                        if (newSelected.has(tag)) {
-                          newSelected.delete(tag)
-                        } else {
-                          newSelected.add(tag)
-                        }
-                        setSelectedTags(newSelected)
-                      }}
-                      className={`px-4 py-2 text-sm rounded-full border-2 transition-all duration-300 ${
-                        selectedTags.has(tag)
-                          ? 'bg-sage-500 text-white border-sage-600 shadow-organic'
-                          : 'bg-earth-100 text-earth-700 border-earth-200 hover:border-sage-400 hover:bg-earth-50'
-                      }`}
-                    >
-                      {tag} {selectedTags.has(tag) && '✓'}
-                    </button>
-                  ))}
+              <div className="space-y-3">
+                {/* Add Custom Tag */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-earth-700">Add Filter Tag:</span>
+                  <input
+                    type="text"
+                    value={newTagInput}
+                    onChange={(e) => setNewTagInput(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    placeholder="Type tag name..."
+                    className="flex-1 max-w-xs px-3 py-2 text-sm border-2 border-earth-200 rounded-organic focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 bg-white/80 text-earth-800 placeholder-earth-400 transition-all duration-300"
+                  />
+                  <button
+                    onClick={handleAddCustomTag}
+                    disabled={!newTagInput.trim() || customTags.includes(newTagInput.trim()) || runTags.includes(newTagInput.trim())}
+                    className="px-4 py-2 text-sm rounded-organic bg-sage-600 text-white hover:bg-sage-700 disabled:bg-earth-300 disabled:cursor-not-allowed transition-all duration-300 font-medium"
+                  >
+                    Add
+                  </button>
                 </div>
-              )}
+
+                {/* Tag Filters */}
+                {allTags.length > 0 && (
+                  <div className="flex flex-wrap gap-3 items-center">
+                    <span className="text-sm font-medium text-earth-700">Tags:</span>
+                    {allTags.map(tag => {
+                      // Check if tag is custom (case-insensitive comparison, handling whitespace)
+                      const isCustomTag = customTags.some(ct => 
+                        ct.trim().toLowerCase() === tag.trim().toLowerCase()
+                      )
+                      const isRunTag = runTags.includes(tag)
+                      const isSelected = selectedTags.has(tag)
+                      
+                      // A tag is deletable ONLY if it's custom AND NOT in runTags
+                      // If it's in runTags, it came from actual runs and shouldn't be deleted
+                      const isDeletable = isCustomTag && !isRunTag
+                      
+                      return (
+                        <div key={tag} className="flex items-center gap-1 group">
+                          <button
+                            onClick={() => {
+                              const newSelected = new Set(selectedTags)
+                              if (newSelected.has(tag)) {
+                                newSelected.delete(tag)
+                              } else {
+                                newSelected.add(tag)
+                              }
+                              setSelectedTags(newSelected)
+                            }}
+                            className={`px-4 py-2 text-sm rounded-full border-2 transition-all duration-300 flex items-center gap-2 ${
+                              isSelected
+                                ? 'bg-sage-500 text-white border-sage-600 shadow-organic'
+                                : 'bg-earth-100 text-earth-700 border-earth-200 hover:border-sage-400 hover:bg-earth-50'
+                            }`}
+                          >
+                            {tag} {isSelected && '✓'}
+                            {isCustomTag && (
+                              <span className="text-xs opacity-75" title={isRunTag ? "Custom filter tag (also exists on runs)" : "Custom filter tag"}>{
+                                isRunTag ? "(custom+run)" : "(custom)"
+                              }</span>
+                            )}
+                          </button>
+                          {/* Delete button ONLY for tags that are custom but NOT in runs */}
+                          {isDeletable && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                e.preventDefault()
+                                console.log('=== DELETE TAG DEBUG ===')
+                                console.log('Tag to delete:', tag)
+                                console.log('All customTags:', customTags)
+                                console.log('All runTags:', runTags)
+                                console.log('Is custom tag?', isCustomTag)
+                                console.log('Is run tag?', isRunTag)
+                                console.log('Is deletable?', isDeletable)
+                                
+                                // Find the exact tag name from customTags (case-sensitive match)
+                                const exactTag = customTags.find(ct => 
+                                  ct.trim().toLowerCase() === tag.trim().toLowerCase()
+                                )
+                                console.log('Found exact tag in customTags:', exactTag)
+                                
+                                if (!exactTag) {
+                                  alert(`Cannot delete: "${tag}" is not found in custom tags. It may only exist in your runs.`)
+                                  return
+                                }
+                                
+                                if (confirm(`Delete custom tag "${tag}"?`)) {
+                                  handleDeleteCustomTag(exactTag)
+                                }
+                              }}
+                              className="opacity-100 w-7 h-7 flex items-center justify-center rounded-full bg-terracotta-100 text-terracotta-800 hover:bg-terracotta-200 hover:text-terracotta-900 transition-all duration-300 text-sm font-bold shadow-sm hover:shadow-md z-10"
+                              title={`Delete custom tag "${tag}"`}
+                            >
+                              ×
+                            </button>
+                          )}
+                          {/* Show info if tag exists in both custom and runs */}
+                          {isCustomTag && isRunTag && (
+                            <span className="text-xs text-earth-600 opacity-75" title="This tag exists in both custom filters and your runs. Cannot delete because it's used in runs.">
+                              (in runs)
+                            </span>
+                          )}
+                          {/* Remove from filter button for selected tags */}
+                          {isSelected && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                e.preventDefault()
+                                const newSelected = new Set(selectedTags)
+                                newSelected.delete(tag)
+                                setSelectedTags(newSelected)
+                              }}
+                              className="opacity-100 w-6 h-6 flex items-center justify-center rounded-full bg-earth-300 text-earth-800 hover:bg-earth-400 transition-all duration-300 text-xs font-bold"
+                              title="Remove from filters"
+                            >
+                              ⊗
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
               
               {/* Clear All Filters */}
               {(selectedTags.size > 0 || selectedYears.size > 0 || selectedMonths.size > 0 || searchQuery.trim()) && (

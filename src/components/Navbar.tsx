@@ -55,6 +55,16 @@ const Navbar = () => {
             >
               Analysis
             </Link>
+            <Link
+              to="/stories"
+              className={`px-4 py-2 rounded-organic text-sm font-medium transition-all duration-300 ${
+                isActive('/stories') 
+                  ? 'bg-sage-200 text-sage-800 shadow-organic' 
+                  : 'text-earth-700 hover:text-sage-700 hover:bg-earth-100/50'
+              }`}
+            >
+              Stories
+            </Link>
           </div>
         </div>
       </div>

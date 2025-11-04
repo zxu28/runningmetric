@@ -29,6 +29,41 @@
     font-weight: 600;
     letter-spacing: 0.01em;
   }
+
+  /* Custom styles for react-calendar */
+  .react-calendar {
+    @apply bg-white border-2 border-earth-200 rounded-organic-lg font-organic;
+  }
+
+  .react-calendar__navigation button {
+    @apply text-earth-700 hover:bg-earth-100 rounded-organic;
+  }
+
+  .react-calendar__navigation button:enabled:hover,
+  .react-calendar__navigation button:enabled:focus {
+    @apply bg-earth-100;
+  }
+
+  .react-calendar__tile {
+    @apply text-earth-700 rounded-organic;
+  }
+
+  .react-calendar__tile:enabled:hover,
+  .react-calendar__tile:enabled:focus {
+    @apply bg-earth-100;
+  }
+
+  .react-calendar__tile--active {
+    @apply bg-sage-500 text-white;
+  }
+
+  .react-calendar__tile--now {
+    @apply bg-moss-100;
+  }
+
+  .react-calendar__month-view__days__day--weekend {
+    @apply text-terracotta-600;
+  }
 }
 
 @layer utilities {
