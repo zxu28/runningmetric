@@ -25,7 +25,6 @@ function generateStoryHTML(
   
   const totalDistance = storyRuns.reduce((sum, run) => sum + run.totalDistance, 0)
   const totalDuration = storyRuns.reduce((sum, run) => sum + run.totalDuration, 0)
-  const totalElevation = storyRuns.reduce((sum, run) => sum + run.elevationGain, 0)
   const avgPace = totalDistance > 0 
     ? (totalDuration / 60) / (totalDistance / 1609.34) 
     : 0
