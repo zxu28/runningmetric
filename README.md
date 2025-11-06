@@ -42,7 +42,14 @@ A modern, privacy-first web application for analyzing running data from GPX file
   - Story insights and achievements
   - Photo attachments for stories
   - Story templates for quick creation
-  - Export stories as PDF, image, or HTML
+  - Export stories as PDF, image, or HTML (with photos and achievements)
+  - Filter runs by tags, years, and months when creating stories
+- ** Dashboard**: 
+  - Activity heatmap showing running frequency (centered on recent months)
+  - Achievement system with badges and milestones
+  - Goal setting and tracking
+- ** Dark Mode**: Toggle between light and dark themes
+- ** Responsive Design**: Mobile-friendly navigation and layouts
 
 ##  Live Website
 
@@ -215,6 +222,42 @@ If you hit the limit, wait 1 hour for the quota to reset.
    - Clear distinction between custom tags and run tags
    - Smart tag deletion (only delete custom tags that don't exist on runs)
 
+7. **Story Run Filtering**
+   - Filter runs by tags, years, and months when creating/editing stories
+   - Simplified run selection with advanced filtering options
+   - Clear visual indicators for selected filters
+   - "Select All" respects active filters
+
+8. **Export Enhancements**
+   - Export now includes photos from stories
+   - Export includes relevant achievements unlocked for the story
+   - Improved photo display in exported formats
+   - Better HTML/PDF/image export quality
+
+9. **Heatmap Improvements**
+   - Centered on recent months (last 6 months) by default
+   - Auto-scrolls to show most recent activity
+   - Improved scroll handling for better user experience
+   - Better month label alignment
+
+10. **Dark Mode**
+    - Toggle between light and dark themes
+    - Theme preference persists across sessions
+    - Smooth theme transitions
+    - All components support dark mode
+
+11. **Dashboard Page**
+    - Activity heatmap visualization
+    - Achievement system with badges
+    - Goal setting and tracking
+    - Personal records display
+
+12. **Responsive UI Improvements**
+    - Mobile-friendly navigation with hamburger menu
+    - Responsive font sizes for titles and text
+    - Adaptive logo text for smaller screens
+    - Improved layout for half-screen viewing
+
 ### 🐛 Issues Solved
 
 1. **Slow Sync Performance**
@@ -265,31 +308,121 @@ If you hit the limit, wait 1 hour for the quota to reset.
 - `src/components/StoryCalendar.tsx` - Story calendar view component
 - `src/components/StoryDetails.tsx` - Story detail view with map and insights
 - `src/components/StoryMap.tsx` - Combined map visualization for story runs
-- `src/components/RunSelector.tsx` - Run selection component for stories
+- `src/components/RunSelector.tsx` - Run selection component with filtering (tags, years, months)
 - `src/components/PhotoUpload.tsx` - Photo upload component
 - `src/components/PhotoGallery.tsx` - Photo gallery component
 - `src/components/TemplateSelector.tsx` - Story template selector
+- `src/components/AchievementPopup.tsx` - Achievement unlock notification
+- `src/components/AchievementBadge.tsx` - Individual achievement badge display
+- `src/components/AchievementsPanel.tsx` - Achievement panel component
+- `src/components/GoalCard.tsx` - Goal card display component
+- `src/components/GoalModal.tsx` - Goal creation/edit modal
+- `src/components/GoalTracker.tsx` - Goal tracking panel
+- `src/components/ActivityHeatmap.tsx` - Activity heatmap visualization
 - `src/contexts/StoriesContext.tsx` - Story management context
+- `src/contexts/GoalsContext.tsx` - Goal management context
+- `src/contexts/ThemeContext.tsx` - Theme management context
 - `src/pages/Stories.tsx` - Running Stories page
+- `src/pages/Dashboard.tsx` - Dashboard page with heatmap, achievements, and goals
 - `src/utils/storyTypes.ts` - Story type definitions
 - `src/utils/storyStorage.ts` - Story localStorage utilities
 - `src/utils/storyInsights.ts` - Story insights generation
 - `src/utils/storyTemplates.ts` - Story templates
-- `src/utils/storyExport.ts` - Story export utilities (PDF, image, HTML)
+- `src/utils/storyExport.ts` - Story export utilities (PDF, image, HTML) with photos and achievements
 - `src/utils/photoStorage.ts` - Photo handling utilities
+- `src/utils/achievements.ts` - Achievement definitions and logic
+- `src/utils/goalTypes.ts` - Goal type definitions
+- `src/utils/goalStorage.ts` - Goal localStorage utilities
+- `src/utils/heatmapData.ts` - Heatmap data processing utilities
+- `src/hooks/useAchievements.ts` - Achievement management hook
 
 ### 🔄 Enhanced Files
 
 - `src/components/RunMap.tsx` - Added color-coded pace visualization and interactive tooltips
 - `src/components/RunDetails.tsx` - Added tag and notes display/editing
 - `src/components/StravaConnectButton.tsx` - Added progress tracking integration
-- `src/pages/Analysis.tsx` - Added year/month filtering, search, custom tag management, and delete buttons for filters
+- `src/components/RunSelector.tsx` - Added filtering by tags, years, and months
+- `src/pages/Analysis.tsx` - Added year/month filtering, search, custom tag management, delete buttons for filters, and responsive title
 - `src/pages/Upload.tsx` - Added progress callbacks and improved sync flow
 - `src/pages/Home.tsx` - Updated with organic theme styling
+- `src/pages/Dashboard.tsx` - New dashboard page with heatmap, achievements, and goals
 - `src/contexts/DataContext.tsx` - Added `updateRun` function and storage optimization
 - `src/utils/gpxParser.ts` - Added `tags` and `notes` fields to `GPXData` interface
-- `src/components/Navbar.tsx` - Added Stories navigation link
-- `src/App.tsx` - Added Stories route and StoriesProvider
+- `src/utils/storyExport.ts` - Enhanced to include photos and achievements in exports
+- `src/components/Navbar.tsx` - Added Stories and Dashboard navigation links, theme toggle, responsive mobile menu
+- `src/App.tsx` - Added Stories and Dashboard routes, StoriesProvider, GoalsProvider, ThemeProvider
+- `src/main.tsx` - Added initial theme application to prevent flash of unstyled content
+- `tailwind.config.js` - Added dark mode support and organic theme colors
+- `src/index.css` - Added dark mode styles and organic theme utilities
+
+## 🐛 Known Issues / Problems to Solve
+
+### High Priority
+
+1. **Heatmap Scrolling on Some Devices**
+   - **Issue**: Horizontal scrolling may not work smoothly on all trackpads/mice
+   - **Current Workaround**: Use Shift + scroll wheel, or click and drag the scrollbar
+   - **Status**: Needs better cross-device scroll handling
+
+2. **Shared Device Privacy**
+   - **Issue**: If multiple users use the same browser/device, they can see each other's data
+   - **Current Workaround**: Users should clear browser data or use "Disconnect" button
+   - **Status**: Consider adding a "Sign Out" or "Clear All Data" feature
+
+3. **Large Dataset Performance**
+   - **Issue**: Performance may degrade with very large numbers of runs (1000+)
+   - **Current Workaround**: Data optimization reduces GPS points for older runs
+   - **Status**: May need pagination or virtual scrolling for large lists
+
+### Medium Priority
+
+4. **Export Quality with Large Photos**
+   - **Issue**: Exporting stories with many large photos may be slow or fail
+   - **Current Workaround**: Photos are compressed, but very large images may still cause issues
+   - **Status**: May need better photo compression or size limits
+
+5. **localStorage Quota Management**
+   - **Issue**: Users with extensive data may hit browser localStorage limits
+   - **Current Workaround**: Automatic optimization reduces GPS point density
+   - **Status**: Consider implementing IndexedDB for larger storage capacity
+
+6. **Mobile Touch Interactions**
+   - **Issue**: Some interactions (like heatmap scrolling) may not work optimally on mobile
+   - **Current Workaround**: Basic touch support exists but could be improved
+   - **Status**: Needs mobile-specific testing and improvements
+
+### Low Priority
+
+7. **Story Export Formatting**
+   - **Issue**: Exported PDFs/images may not perfectly match the on-screen display
+   - **Current Workaround**: HTML export provides best fidelity
+   - **Status**: Minor formatting differences acceptable for MVP
+
+8. **Achievement Notification Timing**
+   - **Issue**: Achievement popups may appear at unexpected times
+   - **Current Workaround**: Users can dismiss notifications
+   - **Status**: Could improve timing and context of notifications
+
+9. **Goal Progress Calculation**
+   - **Issue**: Goal progress updates may not reflect all edge cases
+   - **Current Workaround**: Progress is recalculated when goals are viewed
+   - **Status**: Works correctly for most cases, edge cases need testing
+
+10. **Strava Rate Limiting**
+    - **Issue**: Large syncs may hit Strava API rate limits
+    - **Current Workaround**: 250ms delay between requests, but very large syncs may still fail
+    - **Status**: May need better rate limit handling and retry logic
+
+### Future Enhancements
+
+- **Backend Integration**: Consider adding optional cloud sync for users who want it
+- **Social Features**: Share stories with friends, compare achievements
+- **Advanced Analytics**: More detailed performance analysis and predictions
+- **Import from Other Sources**: Support for other fitness platforms (Garmin Connect, etc.)
+- **Offline Support**: Service worker for offline functionality
+- **Data Export**: Export all data as JSON/CSV for backup
+- **Custom Themes**: Allow users to customize color schemes
+- **Multi-language Support**: Internationalization for different languages
 
 ##  Deployment
 
