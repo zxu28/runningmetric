@@ -5,7 +5,11 @@ import { GPXData } from '../utils/gpxParser'
 import { formatDistance, formatPace, formatDuration } from '../utils/gpxParser'
 import { getRunId } from '../utils/storyTypes'
 import { useStoriesContext } from '../contexts/StoriesContext'
+import { useDataContext } from '../contexts/DataContext'
+import { useBestEfforts } from '../hooks/useBestEfforts'
+import { useAchievements } from '../hooks/useAchievements'
 import { generateStoryInsights } from '../utils/storyInsights'
+import { getStoryAchievements } from '../utils/storyExport'
 import { exportStory, ExportOptions } from '../utils/storyExport'
 import StoryMap from './StoryMap'
 import PhotoGallery from './PhotoGallery'
@@ -26,6 +30,9 @@ const StoryDetails: React.FC<StoryDetailsProps> = ({
   onDelete,
 }) => {
   const { stories } = useStoriesContext()
+  const { parsedData } = useDataContext()
+  const { bestEfforts } = useBestEfforts(parsedData)
+  const { achievements, unlockedIds } = useAchievements(bestEfforts)
   
   // Get runs for this story
   const storyRuns = runs.filter(run => story.runIds.includes(getRunId(run)))
@@ -34,6 +41,11 @@ const StoryDetails: React.FC<StoryDetailsProps> = ({
   const insights = useMemo(() => {
     return generateStoryInsights(story, stories, runs)
   }, [story, stories, runs])
+
+  // Get achievements relevant to this story
+  const storyAchievements = useMemo(() => {
+    return getStoryAchievements(story, parsedData, achievements, unlockedIds)
+  }, [story, parsedData, achievements, unlockedIds])
 
   const [exporting, setExporting] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
@@ -64,9 +76,10 @@ const StoryDetails: React.FC<StoryDetailsProps> = ({
         format,
         includePhotos: true,
         includeMap: true,
+        includeAchievements: true,
         quality: 0.95,
       }
-      await exportStory(story, runs, options)
+      await exportStory(story, parsedData, options, storyAchievements, unlockedIds)
     } catch (error) {
       console.error('Export failed:', error)
       alert('Failed to export story. Please try again.')

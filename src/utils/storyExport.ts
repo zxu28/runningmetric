@@ -5,6 +5,8 @@ import { RunningStory } from './storyTypes'
 import { GPXData } from './gpxParser'
 import { formatDistance, formatPace, formatDuration } from './gpxParser'
 import { getRunId } from './storyTypes'
+import { Achievement, getUnlockedAchievements } from './achievements'
+import { AchievementData } from './achievements'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
@@ -13,13 +15,54 @@ export interface ExportOptions {
   quality?: number // 0-1 for image quality
   includePhotos?: boolean
   includeMap?: boolean
+  includeAchievements?: boolean
+}
+
+// Get achievements relevant to the story
+export function getStoryAchievements(
+  story: RunningStory,
+  runs: GPXData[],
+  allAchievements: Achievement[],
+  unlockedIds: string[]
+): Achievement[] {
+  const storyRuns = runs.filter(run => story.runIds.includes(getRunId(run)))
+  
+  // Create achievement data for this story
+  const achievementData: AchievementData = {
+    runs: storyRuns,
+    stories: [story], // Just this story
+    bestEfforts: {
+      fastestMile: null,
+      fastest5K: null,
+      fastest10K: null,
+      longestRunDistance: null,
+      longestRunTime: null
+    }
+  }
+
+  // Check which achievements are unlocked and relevant to this story
+  const relevantAchievements: Achievement[] = []
+  
+  allAchievements.forEach(achievement => {
+    if (unlockedIds.includes(achievement.id)) {
+      // Check if this achievement is relevant to the story
+      const isRelevant = achievement.condition(achievementData)
+      if (isRelevant) {
+        relevantAchievements.push(achievement)
+      }
+    }
+  })
+
+  return relevantAchievements
 }
 
 // Generate HTML content for story export
 function generateStoryHTML(
   story: RunningStory,
   runs: GPXData[],
-  options: ExportOptions
+  options: ExportOptions,
+  achievements?: Achievement[],
+  unlockedIds?: string[]
 ): string {
   const storyRuns = runs.filter(run => story.runIds.includes(getRunId(run)))
   
@@ -37,13 +80,40 @@ function generateStoryHTML(
     ? startDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
     : `${startDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
 
+  // Photos HTML - improved styling
   const photosHTML = options.includePhotos && story.photos && story.photos.length > 0
     ? `
       <div class="photos-section" style="margin-top: 2rem;">
-        <h2 style="color: #3a5f3a; margin-bottom: 1rem;">Photos</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+        <h2 style="color: #3a5f3a; margin-bottom: 1rem; font-size: 1.5rem;">Photos</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
           ${story.photos.map(photo => `
-            <img src="${photo.data}" alt="${photo.fileName}" style="width: 100%; border-radius: 1rem; border: 2px solid #e5e7eb;" />
+            <div style="position: relative;">
+              <img 
+                src="${photo.data}" 
+                alt="${photo.fileName}" 
+                style="width: 100%; height: auto; border-radius: 1rem; border: 2px solid #e5e7eb; object-fit: cover; min-height: 150px;" 
+                onerror="this.style.display='none'"
+              />
+              ${photo.id === story.coverPhotoId ? '<div style="position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(58, 95, 58, 0.8); color: white; padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-size: 0.75rem;">Cover</div>' : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `
+    : ''
+
+  // Achievements HTML
+  const achievementsHTML = options.includeAchievements && achievements && achievements.length > 0
+    ? `
+      <div class="achievements-section" style="margin-top: 2rem; padding: 1.5rem; background: linear-gradient(135deg, #fef5f3 0%, #f0f9f0 100%); border-radius: 1rem; border: 2px solid #cbd5e1;">
+        <h2 style="color: #3a5f3a; margin-bottom: 1rem; font-size: 1.5rem;">Achievements Unlocked</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
+          ${achievements.map(achievement => `
+            <div style="text-align: center; padding: 1rem; background: white; border-radius: 1rem; border: 2px solid #cbd5e1;">
+              <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">${achievement.emoji}</div>
+              <div style="font-weight: bold; color: #3a5f3a; font-size: 0.875rem; margin-bottom: 0.25rem;">${achievement.title}</div>
+              <div style="font-size: 0.75rem; color: #6b7280;">${achievement.description}</div>
+            </div>
           `).join('')}
         </div>
       </div>
@@ -150,6 +220,10 @@ function generateStoryHTML(
       border-radius: 0.5rem;
       border-left: 4px solid #84cc16;
     }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
     @media print {
       body {
         background: white;
@@ -187,6 +261,16 @@ function generateStoryHTML(
       </div>
     </div>
 
+    ${story.moodTags && story.moodTags.length > 0 ? `
+      <div class="mood-tags">
+        ${story.moodTags.map(tagId => {
+          const moodTag = ['energetic', 'tired', 'motivated', 'struggle', 'proud', 'fast', 'slow', 'happy', 'disappointed'].find(id => id === tagId)
+          const emoji = moodTag === 'energetic' ? '🚀' : moodTag === 'tired' ? '😴' : moodTag === 'motivated' ? '💪' : moodTag === 'struggle' ? '😓' : moodTag === 'proud' ? '🎉' : moodTag === 'fast' ? '🏃' : moodTag === 'slow' ? '🐌' : moodTag === 'happy' ? '😊' : moodTag === 'disappointed' ? '😔' : '🏃'
+          return `<span class="mood-tag">${emoji} ${tagId}</span>`
+        }).join('')}
+      </div>
+    ` : ''}
+
     ${story.weatherNotes || story.emotionalNotes ? `
       <div class="notes-section">
         ${story.weatherNotes ? `
@@ -199,6 +283,8 @@ function generateStoryHTML(
         ` : ''}
       </div>
     ` : ''}
+
+    ${achievementsHTML}
 
     ${photosHTML}
 
@@ -221,9 +307,11 @@ function generateStoryHTML(
 export async function exportStoryAsHTML(
   story: RunningStory,
   runs: GPXData[],
-  options: ExportOptions
+  options: ExportOptions,
+  achievements?: Achievement[],
+  unlockedIds?: string[]
 ): Promise<void> {
-  const htmlContent = generateStoryHTML(story, runs, options)
+  const htmlContent = generateStoryHTML(story, runs, options, achievements, unlockedIds)
   const blob = new Blob([htmlContent], { type: 'text/html' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -239,22 +327,40 @@ export async function exportStoryAsHTML(
 export async function exportStoryAsImage(
   story: RunningStory,
   runs: GPXData[],
-  options: ExportOptions
+  options: ExportOptions,
+  achievements?: Achievement[],
+  unlockedIds?: string[]
 ): Promise<void> {
   // Create a temporary container with the story content
   const container = document.createElement('div')
-  container.innerHTML = generateStoryHTML(story, runs, options)
+  container.innerHTML = generateStoryHTML(story, runs, options, achievements, unlockedIds)
   container.style.position = 'absolute'
   container.style.left = '-9999px'
   container.style.width = '800px'
   document.body.appendChild(container)
 
   try {
+    // Wait for images to load
+    const images = container.querySelectorAll('img')
+    await Promise.all(
+      Array.from(images).map(img => {
+        return new Promise<void>((resolve) => {
+          if (img.complete) {
+            resolve()
+          } else {
+            img.onload = () => resolve()
+            img.onerror = () => resolve() // Resolve even on error to not block export
+          }
+        })
+      })
+    )
+
     const canvas = await html2canvas(container, {
       scale: 2,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
+      allowTaint: true,
     })
 
     canvas.toBlob((blob) => {
@@ -278,22 +384,40 @@ export async function exportStoryAsImage(
 export async function exportStoryAsPDF(
   story: RunningStory,
   runs: GPXData[],
-  options: ExportOptions
+  options: ExportOptions,
+  achievements?: Achievement[],
+  unlockedIds?: string[]
 ): Promise<void> {
   // Create a temporary container with the story content
   const container = document.createElement('div')
-  container.innerHTML = generateStoryHTML(story, runs, options)
+  container.innerHTML = generateStoryHTML(story, runs, options, achievements, unlockedIds)
   container.style.position = 'absolute'
   container.style.left = '-9999px'
   container.style.width = '800px'
   document.body.appendChild(container)
 
   try {
+    // Wait for images to load
+    const images = container.querySelectorAll('img')
+    await Promise.all(
+      Array.from(images).map(img => {
+        return new Promise<void>((resolve) => {
+          if (img.complete) {
+            resolve()
+          } else {
+            img.onload = () => resolve()
+            img.onerror = () => resolve() // Resolve even on error to not block export
+          }
+        })
+      })
+    )
+
     const canvas = await html2canvas(container, {
       scale: 2,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
+      allowTaint: true,
     })
 
     const imgData = canvas.toDataURL('image/png')
@@ -317,17 +441,19 @@ export async function exportStoryAsPDF(
 export async function exportStory(
   story: RunningStory,
   runs: GPXData[],
-  options: ExportOptions
+  options: ExportOptions,
+  achievements?: Achievement[],
+  unlockedIds?: string[]
 ): Promise<void> {
   switch (options.format) {
     case 'html':
-      await exportStoryAsHTML(story, runs, options)
+      await exportStoryAsHTML(story, runs, options, achievements, unlockedIds)
       break
     case 'image':
-      await exportStoryAsImage(story, runs, options)
+      await exportStoryAsImage(story, runs, options, achievements, unlockedIds)
       break
     case 'pdf':
-      await exportStoryAsPDF(story, runs, options)
+      await exportStoryAsPDF(story, runs, options, achievements, unlockedIds)
       break
     default:
       throw new Error(`Unsupported export format: ${options.format}`)

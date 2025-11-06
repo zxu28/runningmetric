@@ -16,6 +16,11 @@
     letter-spacing: -0.01em;
   }
   
+  .dark body {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1f1f1f 100%);
+    color: #e5e5e5;
+  }
+  
   * {
     @apply transition-all duration-300 ease-out;
   }
@@ -35,8 +40,16 @@
     @apply bg-white border-2 border-earth-200 rounded-organic-lg font-organic;
   }
 
+  .dark .react-calendar {
+    @apply bg-earth-800 border-earth-700 text-earth-100;
+  }
+
   .react-calendar__navigation button {
     @apply text-earth-700 hover:bg-earth-100 rounded-organic;
+  }
+
+  .dark .react-calendar__navigation button {
+    @apply text-earth-200 hover:bg-earth-700;
   }
 
   .react-calendar__navigation button:enabled:hover,
@@ -44,8 +57,17 @@
     @apply bg-earth-100;
   }
 
+  .dark .react-calendar__navigation button:enabled:hover,
+  .dark .react-calendar__navigation button:enabled:focus {
+    @apply bg-earth-700;
+  }
+
   .react-calendar__tile {
     @apply text-earth-700 rounded-organic;
+  }
+
+  .dark .react-calendar__tile {
+    @apply text-earth-200;
   }
 
   .react-calendar__tile:enabled:hover,

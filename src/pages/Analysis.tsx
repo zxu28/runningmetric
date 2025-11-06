@@ -5,6 +5,8 @@ import { useDataContext } from '../contexts/DataContext'
 import { formatDistance, formatPace, GPXData } from '../utils/gpxParser'
 import { getMostRecentRun } from '../utils/runHelpers'
 import { useBestEfforts } from '../hooks/useBestEfforts'
+import { useAchievements } from '../hooks/useAchievements'
+import { getAchievementById } from '../utils/achievements'
 import PacePerMileChart from '../components/PacePerMileChart'
 import RightChartsPanel from '../components/RightChartsPanel'
 import RunCalendar from '../components/RunCalendar'
@@ -14,6 +16,7 @@ import BestEffortsGrid from '../components/BestEffortsGrid'
 import PRBadge from '../components/PRBadge'
 import StatsOverview from '../components/StatsOverview'
 import RunComparison from '../components/RunComparison'
+import AchievementPopup from '../components/AchievementPopup'
 
 const Analysis = () => {
   const { parsedData, removeDuplicates, clearAllData, updateRun } = useDataContext()
@@ -77,6 +80,9 @@ const Analysis = () => {
   
   // Use best efforts hook
   const { bestEfforts, newPRs, clearNewPRs } = useBestEfforts(parsedData)
+  
+  // Use achievements hook
+  const { achievements, unlockedIds, newlyUnlocked, clearNewlyUnlocked } = useAchievements(bestEfforts)
   
   // Get all unique tags from runs and combine with custom tags
   const runTags = Array.from(new Set(
@@ -306,17 +312,31 @@ const Analysis = () => {
   }
 
   return (
-    <div className="min-h-screen bg-organic-gradient py-8">
+    <div className="min-h-screen bg-organic-gradient dark:bg-gradient-to-br dark:from-earth-900 dark:via-earth-800 dark:to-earth-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-earth-800 mb-10">Running Analysis</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-earth-800 dark:text-earth-100 mb-6 sm:mb-10">Running Analysis</h1>
+          
+          {/* Achievement Popups */}
+          <AnimatePresence>
+            {newlyUnlocked.map(achievementId => {
+              const achievement = getAchievementById(achievementId)
+              return achievement ? (
+                <AchievementPopup
+                  key={achievementId}
+                  achievement={achievement}
+                  onDismiss={clearNewlyUnlocked}
+                />
+              ) : null
+            })}
+          </AnimatePresence>
           
           {/* Search and Filter Bar */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-6 mb-8">
+          <div className="bg-white/70 dark:bg-earth-800/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-6 mb-8">
             <div className="space-y-5">
               {/* Search */}
               <div className="flex-1">
@@ -325,14 +345,14 @@ const Analysis = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search runs by name, tags, or notes..."
-                  className="w-full px-5 py-3 border-2 border-earth-200 rounded-organic focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 bg-white/80 text-earth-800 placeholder-earth-400 transition-all duration-300"
+                  className="w-full px-5 py-3 border-2 border-earth-200 dark:border-earth-700 rounded-organic focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 bg-white/80 dark:bg-earth-700/80 text-earth-800 dark:text-earth-100 placeholder-earth-400 dark:placeholder-earth-500 transition-all duration-300"
                 />
               </div>
               
               {/* Year Filters */}
               {allYears.length > 0 && (
                 <div className="flex flex-wrap gap-3 items-center">
-                  <span className="text-sm font-medium text-earth-700">Year:</span>
+                  <span className="text-sm font-medium text-earth-700 dark:text-earth-300">Year:</span>
                   {allYears.map(year => {
                     const isSelected = selectedYears.has(year)
                     return (
@@ -392,7 +412,7 @@ const Analysis = () => {
               {/* Month Filters */}
               {allMonths.length > 0 && (
                 <div className="flex flex-wrap gap-3 items-center">
-                  <span className="text-sm font-medium text-earth-700">Month:</span>
+                  <span className="text-sm font-medium text-earth-700 dark:text-earth-300">Month:</span>
                   {allMonths.map(({ key, label }) => {
                     const isSelected = selectedMonths.has(key)
                     return (
@@ -446,14 +466,14 @@ const Analysis = () => {
               <div className="space-y-3">
                 {/* Add Custom Tag */}
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-earth-700">Add Filter Tag:</span>
+                  <span className="text-sm font-medium text-earth-700 dark:text-earth-300">Add Filter Tag:</span>
                   <input
                     type="text"
                     value={newTagInput}
                     onChange={(e) => setNewTagInput(e.target.value)}
                     onKeyDown={handleKeyPress}
                     placeholder="Type tag name..."
-                    className="flex-1 max-w-xs px-3 py-2 text-sm border-2 border-earth-200 rounded-organic focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 bg-white/80 text-earth-800 placeholder-earth-400 transition-all duration-300"
+                    className="flex-1 max-w-xs px-3 py-2 text-sm border-2 border-earth-200 dark:border-earth-700 rounded-organic focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 bg-white/80 dark:bg-earth-700/80 text-earth-800 dark:text-earth-100 placeholder-earth-400 dark:placeholder-earth-500 transition-all duration-300"
                   />
                   <button
                     onClick={handleAddCustomTag}
@@ -467,7 +487,7 @@ const Analysis = () => {
                 {/* Tag Filters */}
                 {allTags.length > 0 && (
                   <div className="flex flex-wrap gap-3 items-center">
-                    <span className="text-sm font-medium text-earth-700">Tags:</span>
+                    <span className="text-sm font-medium text-earth-700 dark:text-earth-300">Tags:</span>
                     {allTags.map(tag => {
                       // Check if tag is custom (case-insensitive comparison, handling whitespace)
                       const isCustomTag = customTags.some(ct => 
