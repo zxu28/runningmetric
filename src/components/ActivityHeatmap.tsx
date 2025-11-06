@@ -6,8 +6,7 @@ import {
   getHeatmapDateRange,
   fillHeatmapDates,
   getIntensityLevel,
-  getIntensityColor,
-  HeatmapData
+  getIntensityColor
 } from '../utils/heatmapData'
 import { formatDistance } from '../utils/gpxParser'
 
@@ -172,7 +171,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
         <div className="inline-block min-w-full">
           {/* Month labels */}
           <div className="flex mb-2 relative" style={{ paddingLeft: '30px', height: '16px' }}>
-            {monthPositions.map(({ week, day, month }, idx) => {
+            {monthPositions.map(({ week, day, month }) => {
               // Calculate pixel position: 
               // - Each week column is w-3 (12px) + gap-1 (4px) = 16px total
               // - Day within week doesn't affect horizontal position (cells are stacked vertically)

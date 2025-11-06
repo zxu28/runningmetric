@@ -176,7 +176,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     description: 'Completed your first goal',
     emoji: '🎯',
     category: 'milestones',
-    condition: (data) => {
+    condition: () => {
       // This will be checked separately when goals are completed
       // For now, always return false - will be set by GoalsContext
       return false

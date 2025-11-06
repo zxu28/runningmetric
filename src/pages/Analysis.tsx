@@ -82,7 +82,7 @@ const Analysis = () => {
   const { bestEfforts, newPRs, clearNewPRs } = useBestEfforts(parsedData)
   
   // Use achievements hook
-  const { achievements, unlockedIds, newlyUnlocked, clearNewlyUnlocked } = useAchievements(bestEfforts)
+  const { newlyUnlocked, clearNewlyUnlocked } = useAchievements(bestEfforts)
   
   // Get all unique tags from runs and combine with custom tags
   const runTags = Array.from(new Set(

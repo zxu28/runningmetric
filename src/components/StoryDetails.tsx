@@ -79,7 +79,7 @@ const StoryDetails: React.FC<StoryDetailsProps> = ({
         includeAchievements: true,
         quality: 0.95,
       }
-      await exportStory(story, parsedData, options, storyAchievements, unlockedIds)
+      await exportStory(story, parsedData, options, storyAchievements)
     } catch (error) {
       console.error('Export failed:', error)
       alert('Failed to export story. Please try again.')

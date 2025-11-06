@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { useGoalsContext } from '../contexts/GoalsContext'
 import { RunningGoal } from '../utils/goalTypes'
 import GoalCard from './GoalCard'

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { RunningGoal, GoalType, GoalPeriod, calculatePeriodDates, formatGoalValue } from '../utils/goalTypes'
+import { RunningGoal, GoalType, GoalPeriod, calculatePeriodDates } from '../utils/goalTypes'
 
 interface GoalModalProps {
   isOpen: boolean

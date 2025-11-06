@@ -8,7 +8,6 @@ import {
   Achievement,
   AchievementData,
   checkAchievements,
-  getAchievementById,
   ACHIEVEMENTS
 } from '../utils/achievements'
 

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { RunningGoal, formatGoalValue, getGoalUnit } from '../utils/goalTypes'
+import { RunningGoal, formatGoalValue } from '../utils/goalTypes'
 
 interface GoalCardProps {
   goal: RunningGoal
@@ -11,7 +11,6 @@ interface GoalCardProps {
 const GoalCard: React.FC<GoalCardProps> = ({ goal, onEdit, onDelete, onComplete }) => {
   const progressPercent = Math.min((goal.progress / goal.target) * 100, 100)
   const remaining = Math.max(goal.target - goal.progress, 0)
-  const unit = getGoalUnit(goal.type)
 
   const getGoalTypeColor = (type: string) => {
     switch (type) {

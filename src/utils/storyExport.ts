@@ -5,7 +5,7 @@ import { RunningStory } from './storyTypes'
 import { GPXData } from './gpxParser'
 import { formatDistance, formatPace, formatDuration } from './gpxParser'
 import { getRunId } from './storyTypes'
-import { Achievement, getUnlockedAchievements } from './achievements'
+import { Achievement } from './achievements'
 import { AchievementData } from './achievements'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -61,8 +61,7 @@ function generateStoryHTML(
   story: RunningStory,
   runs: GPXData[],
   options: ExportOptions,
-  achievements?: Achievement[],
-  unlockedIds?: string[]
+  achievements?: Achievement[]
 ): string {
   const storyRuns = runs.filter(run => story.runIds.includes(getRunId(run)))
   
@@ -308,10 +307,9 @@ export async function exportStoryAsHTML(
   story: RunningStory,
   runs: GPXData[],
   options: ExportOptions,
-  achievements?: Achievement[],
-  unlockedIds?: string[]
+  achievements?: Achievement[]
 ): Promise<void> {
-  const htmlContent = generateStoryHTML(story, runs, options, achievements, unlockedIds)
+  const htmlContent = generateStoryHTML(story, runs, options, achievements)
   const blob = new Blob([htmlContent], { type: 'text/html' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -328,12 +326,11 @@ export async function exportStoryAsImage(
   story: RunningStory,
   runs: GPXData[],
   options: ExportOptions,
-  achievements?: Achievement[],
-  unlockedIds?: string[]
+  achievements?: Achievement[]
 ): Promise<void> {
   // Create a temporary container with the story content
   const container = document.createElement('div')
-  container.innerHTML = generateStoryHTML(story, runs, options, achievements, unlockedIds)
+  container.innerHTML = generateStoryHTML(story, runs, options, achievements)
   container.style.position = 'absolute'
   container.style.left = '-9999px'
   container.style.width = '800px'
@@ -385,12 +382,11 @@ export async function exportStoryAsPDF(
   story: RunningStory,
   runs: GPXData[],
   options: ExportOptions,
-  achievements?: Achievement[],
-  unlockedIds?: string[]
+  achievements?: Achievement[]
 ): Promise<void> {
   // Create a temporary container with the story content
   const container = document.createElement('div')
-  container.innerHTML = generateStoryHTML(story, runs, options, achievements, unlockedIds)
+  container.innerHTML = generateStoryHTML(story, runs, options, achievements)
   container.style.position = 'absolute'
   container.style.left = '-9999px'
   container.style.width = '800px'
@@ -442,18 +438,17 @@ export async function exportStory(
   story: RunningStory,
   runs: GPXData[],
   options: ExportOptions,
-  achievements?: Achievement[],
-  unlockedIds?: string[]
+  achievements?: Achievement[]
 ): Promise<void> {
   switch (options.format) {
     case 'html':
-      await exportStoryAsHTML(story, runs, options, achievements, unlockedIds)
+      await exportStoryAsHTML(story, runs, options, achievements)
       break
     case 'image':
-      await exportStoryAsImage(story, runs, options, achievements, unlockedIds)
+      await exportStoryAsImage(story, runs, options, achievements)
       break
     case 'pdf':
-      await exportStoryAsPDF(story, runs, options, achievements, unlockedIds)
+      await exportStoryAsPDF(story, runs, options, achievements)
       break
     default:
       throw new Error(`Unsupported export format: ${options.format}`)

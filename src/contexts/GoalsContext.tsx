@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
-import { RunningGoal, GoalType, calculatePeriodDates } from '../utils/goalTypes'
+import { RunningGoal, calculatePeriodDates } from '../utils/goalTypes'
 import { loadGoals, saveGoals } from '../utils/goalStorage'
 import { useDataContext } from './DataContext'
 import { GPXData } from '../utils/gpxParser'
