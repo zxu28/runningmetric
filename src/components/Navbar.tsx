@@ -52,16 +52,6 @@ const Navbar = () => {
               Upload
             </Link>
             <Link
-              to="/dashboard"
-              className={`px-2 lg:px-4 py-2 rounded-organic text-xs lg:text-sm font-medium transition-all duration-300 ${
-                isActive('/dashboard') 
-                  ? 'bg-sage-200 dark:bg-sage-700 text-sage-800 dark:text-sage-100 shadow-organic' 
-                  : 'text-earth-700 dark:text-earth-200 hover:text-sage-700 dark:hover:text-sage-300 hover:bg-earth-100/50 dark:hover:bg-earth-700/50'
-              }`}
-            >
-              Dashboard
-            </Link>
-            <Link
               to="/analysis"
               className={`px-2 lg:px-4 py-2 rounded-organic text-xs lg:text-sm font-medium transition-all duration-300 ${
                 isActive('/analysis') 
@@ -166,17 +156,6 @@ const Navbar = () => {
                 }`}
               >
                 Upload
-              </Link>
-              <Link
-                to="/dashboard"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`px-4 py-2 rounded-organic text-sm font-medium transition-all duration-300 ${
-                  isActive('/dashboard') 
-                    ? 'bg-sage-200 dark:bg-sage-700 text-sage-800 dark:text-sage-100 shadow-organic' 
-                    : 'text-earth-700 dark:text-earth-200 hover:bg-earth-100/50 dark:hover:bg-earth-700/50'
-                }`}
-              >
-                Dashboard
               </Link>
               <Link
                 to="/analysis"

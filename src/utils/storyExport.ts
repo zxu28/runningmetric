@@ -1,7 +1,7 @@
 // Story Export Utility
 // Exports stories as PDF, image, or HTML
 
-import { RunningStory } from './storyTypes'
+import { RunningStory, StoryPhoto } from './storyTypes'
 import { GPXData } from './gpxParser'
 import { formatDistance, formatPace, formatDuration } from './gpxParser'
 import { getRunId } from './storyTypes'
@@ -9,6 +9,72 @@ import { Achievement } from './achievements'
 import { AchievementData } from './achievements'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
+
+// Compress/resize photo for export (optimize for export performance)
+async function optimizePhotoForExport(photo: StoryPhoto, maxWidth: number = 1200, maxHeight: number = 1200, quality: number = 0.8): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      // Calculate new dimensions
+      let width = img.width
+      let height = img.height
+      
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height)
+        width = width * ratio
+        height = height * ratio
+      }
+      
+      // Create canvas and compress
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      
+      if (!ctx) {
+        reject(new Error('Failed to create canvas context'))
+        return
+      }
+      
+      // Draw and compress image
+      ctx.drawImage(img, 0, 0, width, height)
+      const compressedData = canvas.toDataURL('image/jpeg', quality)
+      resolve(compressedData)
+    }
+    
+    img.onerror = () => {
+      reject(new Error('Failed to load image'))
+    }
+    
+    img.src = photo.data
+  })
+}
+
+// Optimize all photos for export
+async function optimizePhotosForExport(photos: StoryPhoto[]): Promise<StoryPhoto[]> {
+  if (photos.length === 0) return []
+  
+  try {
+    const optimizedPhotos = await Promise.all(
+      photos.map(async (photo) => {
+        try {
+          const optimizedData = await optimizePhotoForExport(photo)
+          return {
+            ...photo,
+            data: optimizedData
+          }
+        } catch (error) {
+          console.warn(`Failed to optimize photo ${photo.id}, using original:`, error)
+          return photo // Fallback to original if optimization fails
+        }
+      })
+    )
+    return optimizedPhotos
+  } catch (error) {
+    console.warn('Failed to optimize photos, using originals:', error)
+    return photos // Fallback to original photos
+  }
+}
 
 export interface ExportOptions {
   format: 'pdf' | 'image' | 'html'
@@ -61,7 +127,8 @@ function generateStoryHTML(
   story: RunningStory,
   runs: GPXData[],
   options: ExportOptions,
-  achievements?: Achievement[]
+  achievements?: Achievement[],
+  optimizedPhotos?: StoryPhoto[]
 ): string {
   const storyRuns = runs.filter(run => story.runIds.includes(getRunId(run)))
   
@@ -79,13 +146,16 @@ function generateStoryHTML(
     ? startDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
     : `${startDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
 
+  // Use optimized photos if provided, otherwise use original photos
+  const photosToUse = optimizedPhotos || story.photos || []
+  
   // Photos HTML - improved styling
-  const photosHTML = options.includePhotos && story.photos && story.photos.length > 0
+  const photosHTML = options.includePhotos && photosToUse.length > 0
     ? `
       <div class="photos-section" style="margin-top: 2rem;">
         <h2 style="color: #3a5f3a; margin-bottom: 1rem; font-size: 1.5rem;">Photos</h2>
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-          ${story.photos.map(photo => `
+          ${photosToUse.map(photo => `
             <div style="position: relative;">
               <img 
                 src="${photo.data}" 
@@ -309,7 +379,13 @@ export async function exportStoryAsHTML(
   options: ExportOptions,
   achievements?: Achievement[]
 ): Promise<void> {
-  const htmlContent = generateStoryHTML(story, runs, options, achievements)
+  // Optimize photos before export if included
+  let optimizedPhotos: StoryPhoto[] | undefined
+  if (options.includePhotos && story.photos && story.photos.length > 0) {
+    optimizedPhotos = await optimizePhotosForExport(story.photos)
+  }
+  
+  const htmlContent = generateStoryHTML(story, runs, options, achievements, optimizedPhotos)
   const blob = new Blob([htmlContent], { type: 'text/html' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -328,9 +404,15 @@ export async function exportStoryAsImage(
   options: ExportOptions,
   achievements?: Achievement[]
 ): Promise<void> {
+  // Optimize photos before export if included
+  let optimizedPhotos: StoryPhoto[] | undefined
+  if (options.includePhotos && story.photos && story.photos.length > 0) {
+    optimizedPhotos = await optimizePhotosForExport(story.photos)
+  }
+  
   // Create a temporary container with the story content
   const container = document.createElement('div')
-  container.innerHTML = generateStoryHTML(story, runs, options, achievements)
+  container.innerHTML = generateStoryHTML(story, runs, options, achievements, optimizedPhotos)
   container.style.position = 'absolute'
   container.style.left = '-9999px'
   container.style.width = '800px'
@@ -384,9 +466,15 @@ export async function exportStoryAsPDF(
   options: ExportOptions,
   achievements?: Achievement[]
 ): Promise<void> {
+  // Optimize photos before export if included
+  let optimizedPhotos: StoryPhoto[] | undefined
+  if (options.includePhotos && story.photos && story.photos.length > 0) {
+    optimizedPhotos = await optimizePhotosForExport(story.photos)
+  }
+  
   // Create a temporary container with the story content
   const container = document.createElement('div')
-  container.innerHTML = generateStoryHTML(story, runs, options, achievements)
+  container.innerHTML = generateStoryHTML(story, runs, options, achievements, optimizedPhotos)
   container.style.position = 'absolute'
   container.style.left = '-9999px'
   container.style.width = '800px'

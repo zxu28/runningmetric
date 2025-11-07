@@ -6,6 +6,7 @@ interface DataContextType {
   setParsedData: (data: GPXData[]) => void
   addParsedData: (data: GPXData[]) => void
   updateRun: (updatedRun: GPXData) => void
+  deleteRun: (runToDelete: GPXData) => void
   clearData: () => void
   clearAllData: () => void
   removeDuplicates: () => void
@@ -265,6 +266,33 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     })
   }
 
+  // Delete a single run
+  const deleteRun = (runToDelete: GPXData) => {
+    setParsedData(prevData => {
+      // Find and remove the run - match by stravaId if available, otherwise by fileName + startTime
+      const updatedData = prevData.filter(run => {
+        if (runToDelete.source === 'strava' && runToDelete.stravaId) {
+          // For Strava runs, match by stravaId
+          return !(run.source === 'strava' && run.stravaId === runToDelete.stravaId)
+        } else {
+          // For GPX files, match by fileName + startTime
+          return !(run.fileName === runToDelete.fileName && 
+                   run.startTime.getTime() === runToDelete.startTime.getTime())
+        }
+      })
+      
+      // Save to localStorage
+      try {
+        localStorage.setItem('runningData', JSON.stringify(updatedData))
+        console.log('Deleted run:', runToDelete.fileName)
+      } catch (error) {
+        console.error('Failed to save after deletion:', error)
+      }
+      
+      return updatedData
+    })
+  }
+
   const clearData = () => {
     setParsedData([])
     localStorage.removeItem('runningData')
@@ -331,6 +359,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     setParsedData,
     addParsedData,
     updateRun,
+    deleteRun,
     clearData,
     clearAllData,
     removeDuplicates

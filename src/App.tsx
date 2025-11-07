@@ -7,7 +7,6 @@ import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Upload from './pages/Upload'
 import Analysis from './pages/Analysis'
-import Dashboard from './pages/Dashboard'
 import Stories from './pages/Stories'
 import StravaCallback from './pages/StravaCallback'
 
@@ -24,7 +23,6 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/upload" element={<Upload />} />
                   <Route path="/analysis" element={<Analysis />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/stories" element={<Stories />} />
                   <Route path="/strava-callback" element={<StravaCallback />} />
                 </Routes>

@@ -44,10 +44,11 @@ A modern, privacy-first web application for analyzing running data from GPX file
   - Story templates for quick creation
   - Export stories as PDF, image, or HTML (with photos and achievements)
   - Filter runs by tags, years, and months when creating stories
-- ** Dashboard**: 
-  - Activity heatmap showing running frequency (centered on recent months)
-  - Achievement system with badges and milestones
-  - Goal setting and tracking
+- ** Analysis Page with Tabs**: 
+  - **Runs Tab**: Individual runs list with filters, calendar, maps, and best efforts
+  - **Statistics Tab**: Activity heatmap, overall stats, year-over-year comparisons, best periods, and trend charts
+  - **Achievements Tab**: Achievement system with badges and milestones
+  - **Goals Tab**: Goal setting and tracking
 - ** Dark Mode**: Toggle between light and dark themes
 - ** Responsive Design**: Mobile-friendly navigation and layouts
 
@@ -99,7 +100,7 @@ src/
 ├── pages/              # Main application pages
 │   ├── Home.tsx        # Landing page
 │   ├── Upload.tsx      # File upload interface with enhanced sync
-│   ├── Analysis.tsx     # Data analysis dashboard with advanced filtering
+│   ├── Analysis.tsx     # Unified analysis page with tabs (Runs, Statistics, Achievements, Goals)
 │   ├── Stories.tsx     # Running Stories page
 │   └── StravaCallback.tsx # Strava OAuth callback handler
 ├── services/           # External API services
@@ -179,7 +180,34 @@ If you hit the limit, wait 1 hour for the quota to reset.
 
 ## ✨ Recent Updates & Improvements
 
-### 🆕 New Features
+### 🆕 Latest Updates (Page Consolidation & UI Improvements)
+
+1. **Unified Analysis Page with Tabs**
+   - Consolidated Dashboard and Statistics pages into Analysis page
+   - Tabbed interface: Runs, Statistics, Achievements, Goals
+   - Reduced from 6 pages to 4 main pages for better navigation
+   - Statistics tab includes heatmap at the top, year-over-year comparisons, best periods, and trend charts
+   - Removed redundant summary cards from Runs tab (now only in Statistics)
+
+2. **Improved Run Display**
+   - Selected run from calendar now appears in runs list (not separate)
+   - Selected run card is collapsible like other runs
+   - Consistent styling across all run cards
+   - Calendar section simplified to show only calendar and map preview
+
+3. **Run Comparison UI Updates**
+   - Updated all comparison components to match organic theme colors
+   - Changed blue/purple gradients to sage/moss natural colors
+   - Updated ComparisonMap, PaceDeltaChart, and SplitComparisonTable styling
+   - Floating compare button now uses sage-to-moss gradient instead of blue/purple
+   - All components support dark mode with organic color scheme
+
+4. **Navigation Simplification**
+   - Removed Dashboard and Statistics from main navigation
+   - Streamlined to: Home, Upload, Analysis, Stories
+   - Analysis page serves as main hub with tabbed interface
+
+### 🆕 Previous Features
 
 1. **Enhanced Interactive Maps**
    - Color-coded routes by pace zones (red=faster, blue=slower)
@@ -323,7 +351,7 @@ If you hit the limit, wait 1 hour for the quota to reset.
 - `src/contexts/GoalsContext.tsx` - Goal management context
 - `src/contexts/ThemeContext.tsx` - Theme management context
 - `src/pages/Stories.tsx` - Running Stories page
-- `src/pages/Dashboard.tsx` - Dashboard page with heatmap, achievements, and goals
+- `src/pages/Statistics.tsx` - Statistics page (now integrated into Analysis tabs)
 - `src/utils/storyTypes.ts` - Story type definitions
 - `src/utils/storyStorage.ts` - Story localStorage utilities
 - `src/utils/storyInsights.ts` - Story insights generation
@@ -338,11 +366,15 @@ If you hit the limit, wait 1 hour for the quota to reset.
 
 ### 🔄 Enhanced Files
 
+- `src/components/RunComparison.tsx` - Run comparison modal with organic theme colors (sage/moss gradients)
+- `src/components/ComparisonMap.tsx` - Map comparison component with sage/terracotta route colors
+- `src/components/PaceDeltaChart.tsx` - Pace difference chart with organic color scheme
+- `src/components/SplitComparisonTable.tsx` - Split comparison table with organic styling
 - `src/components/RunMap.tsx` - Added color-coded pace visualization and interactive tooltips
 - `src/components/RunDetails.tsx` - Added tag and notes display/editing
 - `src/components/StravaConnectButton.tsx` - Added progress tracking integration
 - `src/components/RunSelector.tsx` - Added filtering by tags, years, and months
-- `src/pages/Analysis.tsx` - Added year/month filtering, search, custom tag management, delete buttons for filters, and responsive title
+- `src/pages/Analysis.tsx` - Unified page with tabs (Runs, Statistics, Achievements, Goals), consolidated Dashboard and Statistics content, improved run display with collapsible selected run
 - `src/pages/Upload.tsx` - Added progress callbacks and improved sync flow
 - `src/pages/Home.tsx` - Updated with organic theme styling
 - `src/pages/Dashboard.tsx` - New dashboard page with heatmap, achievements, and goals

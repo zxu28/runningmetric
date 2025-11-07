@@ -17,11 +17,11 @@ const AchievementBadge: React.FC<AchievementBadgeProps> = ({
       className={`
         relative p-4 rounded-organic-lg border-2 transition-all duration-300
         ${unlocked 
-          ? 'bg-white/70 backdrop-blur-sm border-sage-300 shadow-organic cursor-pointer hover:shadow-organic-lg hover:scale-105' 
-          : 'bg-earth-100/50 border-earth-200 opacity-60'
+          ? 'bg-white/70 backdrop-blur-sm border-sage-300 shadow-organic cursor-pointer hover:shadow-organic-lg hover:scale-105 active:scale-95' 
+          : 'bg-earth-100/50 border-earth-200 opacity-60 cursor-pointer hover:opacity-80'
         }
       `}
-      title={achievement.description}
+      title={unlocked ? `Click to view details: ${achievement.description}` : 'Locked - Click to view details'}
     >
       <div className="text-center">
         <div className={`text-4xl mb-2 ${unlocked ? '' : 'grayscale'}`}>

@@ -102,6 +102,11 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, onEdit, onDelete, onComplete 
       {/* Date Range */}
       <div className="text-xs text-earth-500 mb-4">
         {goal.startDate.toLocaleDateString()} - {goal.endDate.toLocaleDateString()}
+        {goal.completed && goal.completedAt && (
+          <span className="ml-2 text-sage-600 font-medium">
+            • Completed {goal.completedAt.toLocaleDateString()}
+          </span>
+        )}
       </div>
 
       {/* Actions */}

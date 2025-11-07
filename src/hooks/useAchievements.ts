@@ -51,12 +51,48 @@ export function useAchievements(bestEfforts: PersonalRecords): UseAchievementsRe
   
   const [unlockedIds, setUnlockedIds] = useState<string[]>([])
   const [newlyUnlocked, setNewlyUnlocked] = useState<string[]>([])
+  const [shownAchievements, setShownAchievements] = useState<Set<string>>(new Set())
+
+  // Save shown achievements to localStorage (helper function)
+  const saveShownAchievements = useCallback((shown: Set<string>) => {
+    try {
+      localStorage.setItem('running-metrics-shown-achievements', JSON.stringify(Array.from(shown)))
+    } catch (error) {
+      console.error('Failed to save shown achievements:', error)
+    }
+  }, [])
 
   // Load unlocked achievements on mount
   useEffect(() => {
     const loaded = loadUnlockedAchievements()
     setUnlockedIds(loaded)
-  }, [])
+    // Load shown achievements from localStorage
+    try {
+      const shown = localStorage.getItem('running-metrics-shown-achievements')
+      if (shown) {
+        const parsed = JSON.parse(shown)
+        if (Array.isArray(parsed)) {
+          setShownAchievements(new Set(parsed))
+        }
+      } else {
+        // If no shown achievements stored, mark all currently unlocked as shown
+        // (they were unlocked before this feature was added)
+        if (loaded.length > 0) {
+          const shownSet = new Set(loaded)
+          setShownAchievements(shownSet)
+          saveShownAchievements(shownSet)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load shown achievements:', error)
+      // On error, mark all currently unlocked as shown to prevent showing old achievements
+      if (loaded.length > 0) {
+        const shownSet = new Set(loaded)
+        setShownAchievements(shownSet)
+        saveShownAchievements(shownSet)
+      }
+    }
+  }, [saveShownAchievements])
 
   // Check for new achievements
   const checkForAchievements = useCallback(() => {
@@ -71,10 +107,19 @@ export function useAchievements(bestEfforts: PersonalRecords): UseAchievementsRe
     if (newUnlocked.length > 0) {
       const updatedUnlocked = [...unlockedIds, ...newUnlocked]
       setUnlockedIds(updatedUnlocked)
-      setNewlyUnlocked(newUnlocked)
       saveUnlockedAchievements(updatedUnlocked)
+      
+      // Only add to newlyUnlocked if they haven't been shown before
+      const trulyNew = newUnlocked.filter(id => !shownAchievements.has(id))
+      if (trulyNew.length > 0) {
+        setNewlyUnlocked(trulyNew)
+        // Mark these as shown
+        const updatedShown = new Set([...shownAchievements, ...trulyNew])
+        setShownAchievements(updatedShown)
+        saveShownAchievements(updatedShown)
+      }
     }
-  }, [parsedData, stories, bestEfforts, unlockedIds])
+  }, [parsedData, stories, bestEfforts, unlockedIds, shownAchievements, saveShownAchievements])
 
   // Auto-check when data changes
   useEffect(() => {
@@ -88,10 +133,17 @@ export function useAchievements(bestEfforts: PersonalRecords): UseAchievementsRe
     if (!unlockedIds.includes(id)) {
       const updated = [...unlockedIds, id]
       setUnlockedIds(updated)
-      setNewlyUnlocked(prev => [...prev, id])
       saveUnlockedAchievements(updated)
+      
+      // Only add to newlyUnlocked if it hasn't been shown before
+      if (!shownAchievements.has(id)) {
+        setNewlyUnlocked(prev => [...prev, id])
+        const updatedShown = new Set([...shownAchievements, id])
+        setShownAchievements(updatedShown)
+        saveShownAchievements(updatedShown)
+      }
     }
-  }, [unlockedIds])
+  }, [unlockedIds, shownAchievements, saveShownAchievements])
 
   const clearNewlyUnlocked = useCallback(() => {
     setNewlyUnlocked([])

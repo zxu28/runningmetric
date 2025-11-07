@@ -12,6 +12,7 @@ interface GoalModalProps {
 const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSubmit, existingGoal }) => {
   const [type, setType] = useState<GoalType>('distance')
   const [target, setTarget] = useState<number>(10)
+  const [targetInput, setTargetInput] = useState<string>('10') // String state for input field
   const [period, setPeriod] = useState<GoalPeriod>('weekly')
   const [title, setTitle] = useState('')
   const [customStartDate, setCustomStartDate] = useState<string>('')
@@ -23,6 +24,7 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSubmit, existi
       if (existingGoal) {
         setType(existingGoal.type)
         setTarget(existingGoal.target)
+        setTargetInput(existingGoal.target.toString())
         setPeriod(existingGoal.period)
         setTitle(existingGoal.title || '')
         setCustomStartDate(existingGoal.startDate.toISOString().split('T')[0])
@@ -30,6 +32,7 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSubmit, existi
       } else {
         setType('distance')
         setTarget(10)
+        setTargetInput('10')
         setPeriod('weekly')
         setTitle('')
         const { startDate, endDate } = calculatePeriodDates('weekly')
@@ -43,8 +46,11 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSubmit, existi
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Parse target from input string
+    const parsedTarget = parseFloat(targetInput) || 0
+
     const newErrors: { target?: string; dates?: string } = {}
-    if (target <= 0) {
+    if (parsedTarget <= 0) {
       newErrors.target = 'Target must be greater than 0'
     }
     if (period === 'custom') {
@@ -66,7 +72,7 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSubmit, existi
 
     onSubmit({
       type,
-      target,
+      target: parsedTarget,
       period,
       startDate,
       endDate,
@@ -95,7 +101,9 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSubmit, existi
 
   const handleTypeChange = (newType: GoalType) => {
     setType(newType)
-    setTarget(getDefaultTarget(newType))
+    const defaultTarget = getDefaultTarget(newType)
+    setTarget(defaultTarget)
+    setTargetInput(defaultTarget.toString())
   }
 
   if (!isOpen) return null
@@ -159,12 +167,32 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSubmit, existi
                 Target ({type === 'distance' ? 'miles' : type === 'time' ? 'hours' : type === 'runs' ? 'runs' : type === 'streak' ? 'days' : 'feet'})
               </label>
               <input
-                type="number"
-                value={target}
-                onChange={(e) => setTarget(parseFloat(e.target.value) || 0)}
-                min="0.1"
-                step={type === 'time' ? '0.1' : '1'}
-                className="w-full px-4 py-2 border-2 border-earth-200 rounded-organic focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 bg-white text-earth-800"
+                type="text"
+                value={targetInput}
+                onChange={(e) => {
+                  const value = e.target.value
+                  // Allow empty string and any numeric input
+                  setTargetInput(value)
+                  // Update numeric target for validation
+                  const numValue = parseFloat(value)
+                  if (!isNaN(numValue) && numValue > 0) {
+                    setTarget(numValue)
+                  }
+                }}
+                onBlur={(e) => {
+                  // Validate and set default if empty or invalid
+                  const numValue = parseFloat(targetInput)
+                  if (isNaN(numValue) || numValue <= 0) {
+                    const defaultTarget = getDefaultTarget(type)
+                    setTargetInput(defaultTarget.toString())
+                    setTarget(defaultTarget)
+                  } else {
+                    setTargetInput(numValue.toString())
+                    setTarget(numValue)
+                  }
+                }}
+                placeholder={`Enter ${type === 'distance' ? 'distance in miles' : type === 'time' ? 'time in hours' : type === 'runs' ? 'number of runs' : type === 'streak' ? 'days' : 'elevation in feet'}`}
+                className="w-full px-4 py-3 border-2 border-earth-200 rounded-organic focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-sage-400 bg-white text-earth-800 text-lg placeholder-earth-400"
                 required
               />
               {errors.target && (

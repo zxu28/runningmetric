@@ -17,6 +17,7 @@ const Stories = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingStory, setEditingStory] = useState<RunningStory | undefined>()
   const [viewingStory, setViewingStory] = useState<RunningStory | undefined>()
+  const [searchQuery, setSearchQuery] = useState('')
 
   const handleCreateStory = () => {
     setEditingStory(undefined)
@@ -34,9 +35,12 @@ const Stories = () => {
   }
 
   const handleDeleteStory = (id: string) => {
-    deleteStory(id)
-    if (viewingStory?.id === id) {
-      setViewingStory(undefined)
+    const story = stories.find(s => s.id === id)
+    if (story && confirm(`Are you sure you want to delete "${story.title}"? This action cannot be undone.`)) {
+      deleteStory(id)
+      if (viewingStory?.id === id) {
+        setViewingStory(undefined)
+      }
     }
   }
 
@@ -94,28 +98,40 @@ const Stories = () => {
           {/* View Toggle */}
           {stories.length > 0 && (
             <div className="bg-white/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-4 mb-8">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-earth-700">View:</span>
-                <button
-                  onClick={() => setViewMode('timeline')}
-                  className={`px-6 py-2 rounded-organic font-medium transition-all duration-300 ${
-                    viewMode === 'timeline'
-                      ? 'bg-sage-600 text-white shadow-organic'
-                      : 'bg-earth-100 text-earth-700 hover:bg-earth-200'
-                  }`}
-                >
-                  Timeline
-                </button>
-                <button
-                  onClick={() => setViewMode('calendar')}
-                  className={`px-6 py-2 rounded-organic font-medium transition-all duration-300 ${
-                    viewMode === 'calendar'
-                      ? 'bg-sage-600 text-white shadow-organic'
-                      : 'bg-earth-100 text-earth-700 hover:bg-earth-200'
-                  }`}
-                >
-                  Calendar
-                </button>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex items-center gap-3 flex-1">
+                  <span className="text-sm font-medium text-earth-700">View:</span>
+                  <button
+                    onClick={() => setViewMode('timeline')}
+                    className={`px-6 py-2 rounded-organic font-medium transition-all duration-300 ${
+                      viewMode === 'timeline'
+                        ? 'bg-sage-600 text-white shadow-organic'
+                        : 'bg-earth-100 text-earth-700 hover:bg-earth-200'
+                    }`}
+                  >
+                    Timeline
+                  </button>
+                  <button
+                    onClick={() => setViewMode('calendar')}
+                    className={`px-6 py-2 rounded-organic font-medium transition-all duration-300 ${
+                      viewMode === 'calendar'
+                        ? 'bg-sage-600 text-white shadow-organic'
+                        : 'bg-earth-100 text-earth-700 hover:bg-earth-200'
+                    }`}
+                  >
+                    Calendar
+                  </button>
+                </div>
+                {/* Search Bar */}
+                <div className="flex-1 max-w-md">
+                  <input
+                    type="text"
+                    placeholder="Search stories by title, description, or tags..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-4 py-2 rounded-organic border-2 border-earth-200 focus:ring-2 focus:ring-sage-400 focus:border-sage-400 bg-white text-earth-800 placeholder-earth-400 transition-all duration-300"
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -163,30 +179,68 @@ const Stories = () => {
             </motion.div>
           ) : (
             <div>
-              {viewMode === 'timeline' ? (
-                <StoryTimeline
-                  stories={stories}
-                  runs={parsedData}
-                  onViewStory={handleViewStory}
-                  onEditStory={handleEditStory}
-                  onDeleteStory={handleDeleteStory}
-                />
-              ) : (
-                <StoryCalendar
-                  stories={stories}
-                  runs={parsedData}
-                  onViewStory={handleViewStory}
-                  onEditStory={handleEditStory}
-                  onDeleteStory={handleDeleteStory}
-                />
-              )}
+              {(() => {
+                // Filter stories based on search query
+                const filteredStories = searchQuery.trim()
+                  ? stories.filter(story => {
+                      const query = searchQuery.toLowerCase()
+                      const matchesTitle = story.title.toLowerCase().includes(query)
+                      const matchesDescription = story.description?.toLowerCase().includes(query) || false
+                      const matchesMoodTags = story.moodTags?.some(tag => tag.toLowerCase().includes(query)) || false
+                      const matchesWeatherNotes = story.weatherNotes?.toLowerCase().includes(query) || false
+                      const matchesEmotionalNotes = story.emotionalNotes?.toLowerCase().includes(query) || false
+                      return matchesTitle || matchesDescription || matchesMoodTags || matchesWeatherNotes || matchesEmotionalNotes
+                    })
+                  : stories
+
+                if (filteredStories.length === 0 && searchQuery.trim()) {
+                  return (
+                    <div className="bg-white/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-12 text-center">
+                      <div className="text-6xl mb-4">🔍</div>
+                      <h3 className="text-2xl font-bold text-earth-800 mb-2">No stories found</h3>
+                      <p className="text-earth-600">Try adjusting your search query</p>
+                    </div>
+                  )
+                }
+
+                return viewMode === 'timeline' ? (
+                  <StoryTimeline
+                    stories={filteredStories}
+                    runs={parsedData}
+                    onViewStory={handleViewStory}
+                    onEditStory={handleEditStory}
+                    onDeleteStory={handleDeleteStory}
+                  />
+                ) : (
+                  <StoryCalendar
+                    stories={filteredStories}
+                    runs={parsedData}
+                    onViewStory={handleViewStory}
+                    onEditStory={handleEditStory}
+                    onDeleteStory={handleDeleteStory}
+                  />
+                )
+              })()}
             </div>
           )}
 
           {/* Story Count */}
           {stories.length > 0 && (
             <div className="mt-8 text-center text-earth-600">
-              <p>{stories.length} {stories.length === 1 ? 'story' : 'stories'} created</p>
+              <p>
+                {searchQuery.trim() 
+                  ? `${stories.filter(s => {
+                      const q = searchQuery.toLowerCase()
+                      return s.title.toLowerCase().includes(q) ||
+                             s.description?.toLowerCase().includes(q) ||
+                             s.moodTags?.some(t => t.toLowerCase().includes(q)) ||
+                             s.weatherNotes?.toLowerCase().includes(q) ||
+                             s.emotionalNotes?.toLowerCase().includes(q)
+                    }).length} of ${stories.length}`
+                  : stories.length
+                } {stories.length === 1 ? 'story' : 'stories'}
+                {searchQuery.trim() && ' found'}
+              </p>
             </div>
           )}
         </motion.div>

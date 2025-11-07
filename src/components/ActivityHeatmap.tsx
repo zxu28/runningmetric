@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { GPXData } from '../utils/gpxParser'
 import {
@@ -19,7 +19,7 @@ interface ActivityHeatmapProps {
 const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
   runs,
   onDateClick,
-  range = 'recent' // Default to 'recent' (last 6 months)
+  range = 'all' // Default to 'all' to show all activities
 }) => {
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null)
   const [hoveredValue, setHoveredValue] = useState<number>(0)
@@ -40,22 +40,10 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
     }
   }, [runs, range])
 
-  // Auto-scroll to show recent months when component mounts or data changes
+  // Scroll container ref for wheel event handling
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const hasAutoScrolledRef = useRef(false)
-  
-  useEffect(() => {
-    if (scrollContainerRef.current && range === 'recent' && !hasAutoScrolledRef.current) {
-      // Scroll to the right to show recent months (today is on the right)
-      // Only do this once on initial load
-      setTimeout(() => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth
-          hasAutoScrolledRef.current = true
-        }
-      }, 100) // Small delay to ensure DOM is ready
-    }
-  }, [heatmapData.length, range]) // Only trigger when data length changes, not on every render
+  const scrollAnimationRef = useRef<number | null>(null)
+  const isScrollingRef = useRef(false)
 
   // Calculate weeks and days for grid
   const weeks = useMemo(() => {
@@ -167,6 +155,83 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             WebkitOverflowScrolling: 'touch',
             paddingBottom: '8px' // Space for scrollbar
           }}
+          onWheel={(e) => {
+            // Convert vertical scroll to horizontal scroll with smooth boundaries
+            const element = scrollContainerRef.current
+            if (!element) return
+            
+            const { scrollLeft, scrollWidth, clientWidth } = element
+            const hasHorizontalScroll = scrollWidth > clientWidth
+            
+            if (!hasHorizontalScroll) return
+            
+            // Calculate scroll boundaries
+            const maxScrollLeft = scrollWidth - clientWidth
+            const scrollThreshold = 10 // Threshold for boundary detection
+            
+            // Check if we're at the boundaries
+            const isAtStart = scrollLeft <= scrollThreshold
+            const isAtEnd = scrollLeft + clientWidth >= scrollWidth - scrollThreshold
+            
+            // Cancel any ongoing scroll animation when starting new scroll
+            if (scrollAnimationRef.current) {
+              cancelAnimationFrame(scrollAnimationRef.current)
+              scrollAnimationRef.current = null
+            }
+            isScrollingRef.current = false
+            
+            // If scrolling past boundaries, snap back smoothly
+            if (e.deltaY > 0 && isAtEnd) {
+              // Scrolling right/down past end - snap back to end
+              e.preventDefault()
+              e.stopPropagation()
+              const targetScroll = maxScrollLeft
+              const smoothScroll = () => {
+                const current = element.scrollLeft
+                const diff = targetScroll - current
+                if (Math.abs(diff) < 1) {
+                  element.scrollLeft = targetScroll
+                  isScrollingRef.current = false
+                  scrollAnimationRef.current = null
+                  return
+                }
+                element.scrollLeft += diff * 0.15 // Smooth easing
+                scrollAnimationRef.current = requestAnimationFrame(smoothScroll)
+              }
+              isScrollingRef.current = true
+              smoothScroll()
+              return
+            }
+            
+            if (e.deltaY < 0 && isAtStart) {
+              // Scrolling left/up past start - snap back to start
+              e.preventDefault()
+              e.stopPropagation()
+              const smoothScroll = () => {
+                const current = element.scrollLeft
+                if (current <= 0) {
+                  element.scrollLeft = 0
+                  isScrollingRef.current = false
+                  scrollAnimationRef.current = null
+                  return
+                }
+                element.scrollLeft += current * -0.15 // Smooth easing
+                scrollAnimationRef.current = requestAnimationFrame(smoothScroll)
+              }
+              isScrollingRef.current = true
+              smoothScroll()
+              return
+            }
+            
+            // Normal scrolling within boundaries - direct horizontal scroll for smoothness
+            e.preventDefault()
+            e.stopPropagation()
+            
+            // Calculate new scroll position with reduced speed for smoother feel
+            const scrollAmount = e.deltaY * 0.6
+            const newScrollLeft = Math.max(0, Math.min(maxScrollLeft, scrollLeft + scrollAmount))
+            element.scrollLeft = newScrollLeft
+          }}
         >
         <div className="inline-block min-w-full">
           {/* Month labels */}
@@ -247,7 +312,7 @@ const ActivityHeatmap: React.FC<ActivityHeatmapProps> = ({
             </div>
           </div>
         </div>
-      </div>
+        </div>
       </div>
 
       {/* Tooltip */}

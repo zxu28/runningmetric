@@ -37,24 +37,24 @@ const ComparisonMap: React.FC<ComparisonMapProps> = ({ runA, runB }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-lg shadow-md p-4"
+      className="bg-white/70 dark:bg-earth-800/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-4 border-2 border-earth-200 dark:border-earth-600"
     >
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">Route Comparison</h3>
+      <h3 className="text-lg font-semibold text-earth-800 dark:text-earth-100 mb-2">Route Comparison</h3>
       
       {/* Legend */}
-      <div className="flex items-center space-x-4 mb-2 text-sm">
+      <div className="flex items-center space-x-4 mb-2 text-sm text-earth-700 dark:text-earth-300">
         <div className="flex items-center">
-          <div className="w-4 h-1 bg-blue-500 mr-2"></div>
+          <div className="w-4 h-1 bg-sage-600 mr-2"></div>
           <span>Run A: {runA.fileName}</span>
         </div>
         <div className="flex items-center">
-          <div className="w-4 h-1 bg-orange-500 mr-2"></div>
+          <div className="w-4 h-1 bg-terracotta-600 mr-2"></div>
           <span>Run B: {runB.fileName}</span>
         </div>
       </div>
 
       {coordinatesA.length === 0 || coordinatesB.length === 0 ? (
-        <div className="flex items-center justify-center h-80 text-gray-500">
+        <div className="flex items-center justify-center h-80 text-earth-500 dark:text-earth-400">
           No GPS data available for one or both runs.
         </div>
       ) : (
@@ -62,14 +62,14 @@ const ComparisonMap: React.FC<ComparisonMapProps> = ({ runA, runB }) => {
           center={center}
           zoom={13}
           scrollWheelZoom={true}
-          className="h-96 w-full rounded-md z-0"
+          className="h-96 w-full rounded-organic z-0"
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <Polyline positions={coordinatesA} color="#3b82f6" weight={4} opacity={0.7} />
-          <Polyline positions={coordinatesB} color="#f97316" weight={4} opacity={0.7} />
+          <Polyline positions={coordinatesA} color="#6b7f5f" weight={4} opacity={0.7} />
+          <Polyline positions={coordinatesB} color="#c97d60" weight={4} opacity={0.7} />
           <MapUpdater coordinatesA={coordinatesA} coordinatesB={coordinatesB} />
         </MapContainer>
       )}

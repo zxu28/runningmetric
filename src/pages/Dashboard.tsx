@@ -25,10 +25,10 @@ const Dashboard = () => {
           
           <div className="space-y-6">
             {/* Activity Heatmap */}
-            <ActivityHeatmap runs={parsedData} range="recent" />
+            <ActivityHeatmap runs={parsedData} range="all" />
             
             {/* Achievements */}
-            <AchievementsPanel achievements={achievements} unlockedIds={unlockedIds} />
+            <AchievementsPanel achievements={achievements} unlockedIds={unlockedIds} runs={parsedData} />
             
             {/* Goals */}
             <GoalTracker />
