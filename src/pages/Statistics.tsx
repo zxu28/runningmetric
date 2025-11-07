@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useDataContext } from '../contexts/DataContext'
-import { GPXData, formatDistance, formatPace, formatDuration } from '../utils/gpxParser'
-import { getWeeklyTrends, getMonthlyTrends, PeriodStats, TimePeriod } from '../utils/trendAnalysis'
+import { formatPace } from '../utils/gpxParser'
+import { getWeeklyTrends, getMonthlyTrends, TimePeriod } from '../utils/trendAnalysis'
 import WeeklyDistanceChart from '../components/WeeklyDistanceChart'
 import PaceTrendChart from '../components/PaceTrendChart'
 import ElevationTrendChart from '../components/ElevationTrendChart'
@@ -10,7 +10,6 @@ import ElevationTrendChart from '../components/ElevationTrendChart'
 const Statistics = () => {
   const { parsedData } = useDataContext()
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('thisYear')
-  const [viewMode, setViewMode] = useState<'weekly' | 'monthly' | 'yearly'>('monthly')
 
   const periods: { value: TimePeriod; label: string }[] = [
     { value: 'last7days', label: 'Last 7 Days' },

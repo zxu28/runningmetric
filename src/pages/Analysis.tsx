@@ -272,9 +272,6 @@ const Analysis = () => {
     return true
   })
 
-  // Calculate summary statistics (use filtered runs if filters are active)
-  const displayRuns = filteredRuns.length < parsedData.length ? filteredRuns : parsedData
-
   // Helper function to get unique run ID
   const getRunId = (run: GPXData): string => {
     if (run.source === 'strava' && run.stravaId) {

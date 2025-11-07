@@ -11,7 +11,6 @@ interface GoalModalProps {
 
 const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSubmit, existingGoal }) => {
   const [type, setType] = useState<GoalType>('distance')
-  const [target, setTarget] = useState<number>(10)
   const [targetInput, setTargetInput] = useState<string>('10') // String state for input field
   const [period, setPeriod] = useState<GoalPeriod>('weekly')
   const [title, setTitle] = useState('')
@@ -23,7 +22,6 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSubmit, existi
     if (isOpen) {
       if (existingGoal) {
         setType(existingGoal.type)
-        setTarget(existingGoal.target)
         setTargetInput(existingGoal.target.toString())
         setPeriod(existingGoal.period)
         setTitle(existingGoal.title || '')
@@ -31,7 +29,6 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSubmit, existi
         setCustomEndDate(existingGoal.endDate.toISOString().split('T')[0])
       } else {
         setType('distance')
-        setTarget(10)
         setTargetInput('10')
         setPeriod('weekly')
         setTitle('')
@@ -102,7 +99,6 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSubmit, existi
   const handleTypeChange = (newType: GoalType) => {
     setType(newType)
     const defaultTarget = getDefaultTarget(newType)
-    setTarget(defaultTarget)
     setTargetInput(defaultTarget.toString())
   }
 
@@ -173,22 +169,15 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSubmit, existi
                   const value = e.target.value
                   // Allow empty string and any numeric input
                   setTargetInput(value)
-                  // Update numeric target for validation
-                  const numValue = parseFloat(value)
-                  if (!isNaN(numValue) && numValue > 0) {
-                    setTarget(numValue)
-                  }
                 }}
-                onBlur={(e) => {
+                onBlur={() => {
                   // Validate and set default if empty or invalid
                   const numValue = parseFloat(targetInput)
                   if (isNaN(numValue) || numValue <= 0) {
                     const defaultTarget = getDefaultTarget(type)
                     setTargetInput(defaultTarget.toString())
-                    setTarget(defaultTarget)
                   } else {
                     setTargetInput(numValue.toString())
-                    setTarget(numValue)
                   }
                 }}
                 placeholder={`Enter ${type === 'distance' ? 'distance in miles' : type === 'time' ? 'time in hours' : type === 'runs' ? 'number of runs' : type === 'streak' ? 'days' : 'elevation in feet'}`}
