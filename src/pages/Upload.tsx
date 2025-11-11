@@ -11,7 +11,7 @@ import { convertStravaActivityToGPXData, validateStravaStreams } from '../utils/
 const Upload = () => {
   const navigate = useNavigate()
   const { addParsedData } = useDataContext()
-  const { showError, showSuccess, showInfo, showWarning } = useError()
+  const { showError, showSuccess, showInfo } = useError()
   const [dragActive, setDragActive] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [parsedData, setParsedData] = useState<GPXData[]>([])

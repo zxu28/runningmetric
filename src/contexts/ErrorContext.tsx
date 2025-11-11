@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react'
-import { Toast, ToastType } from './ErrorToast'
+import { Toast, ToastType } from '../components/ErrorToast'
 
 interface ErrorContextType {
   showToast: (message: string, type?: ToastType, duration?: number) => void
