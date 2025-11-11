@@ -302,8 +302,18 @@ const RunSelector: React.FC<RunSelectorProps> = ({ runs, selectedRunIds, onSelec
       {/* Run List */}
       <div className="max-h-96 overflow-y-auto space-y-2 border-2 border-earth-200 dark:border-earth-700 rounded-organic-lg p-4 bg-white/50 dark:bg-earth-800/50">
         {filteredAndSortedRuns.length === 0 ? (
-          <div className="text-center py-8 text-earth-600 dark:text-earth-400">
-            <p>No runs match your filters.</p>
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4 animate-float">🔍</div>
+            <h3 className="text-xl font-bold text-earth-800 dark:text-earth-100 mb-2">
+              {selectedTags.size > 0 || selectedYears.size > 0 || selectedMonths.size > 0 || searchQuery
+                ? 'No Runs Match Your Filters'
+                : 'No Runs Available'}
+            </h3>
+            <p className="text-earth-600 dark:text-earth-400 mb-6 max-w-md mx-auto leading-relaxed">
+              {selectedTags.size > 0 || selectedYears.size > 0 || selectedMonths.size > 0 || searchQuery
+                ? 'Try adjusting your filters or search query to find more runs.'
+                : 'Upload GPX files or sync from Strava to get started.'}
+            </p>
             {(selectedTags.size > 0 || selectedYears.size > 0 || selectedMonths.size > 0 || searchQuery) && (
               <button
                 onClick={() => {
@@ -312,9 +322,9 @@ const RunSelector: React.FC<RunSelectorProps> = ({ runs, selectedRunIds, onSelec
                   setSelectedYears(new Set())
                   setSelectedMonths(new Set())
                 }}
-                className="mt-2 text-sm text-sage-600 dark:text-sage-400 hover:text-sage-700 dark:hover:text-sage-300"
+                className="inline-flex items-center px-6 py-3 rounded-organic-lg bg-sage-600 text-white hover:bg-sage-700 shadow-organic-lg hover:shadow-organic transform hover:scale-105 transition-all duration-300 font-medium"
               >
-                Clear filters
+                Clear All Filters
               </button>
             )}
           </div>

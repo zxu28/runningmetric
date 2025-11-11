@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { GPXData } from '../utils/gpxParser'
+import { useError } from './ErrorContext'
 
 interface DataContextType {
   parsedData: GPXData[]
@@ -27,6 +28,7 @@ interface DataProviderProps {
 }
 
 export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
+  const { showInfo, showError } = useError()
   const [parsedData, setParsedData] = useState<GPXData[]>([])
 
   // Load data from localStorage on initialization
@@ -223,10 +225,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
             console.log('✅ Successfully saved optimized data')
             
             // Show user-friendly message
-            alert(`Storage space was getting full, so some GPS point detail was reduced to save space. Your data is now ${optimizedSizeMB} MB.`)
+            showInfo(`Storage space was getting full, so some GPS point detail was reduced to save space. Your data is now ${optimizedSizeMB} MB.`, 6000)
           } catch (retryError) {
             console.error('❌ Cannot save even after optimization:', retryError)
-            alert(`Browser storage is full (${updatedData.length} runs). Please:\n\n1. Clear old runs using the "Clear All Data" button\n2. Or sync fewer activities at once\n\nYour data is safe but not saved yet.`)
+            showError(`Browser storage is full (${updatedData.length} runs). Please clear old runs using the "Clear All Data" button or sync fewer activities at once. Your data is safe but not saved yet.`, 10000)
             throw retryError
           }
         }

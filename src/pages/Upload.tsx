@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { parseMultipleGPXFiles, formatDistance, formatDuration, formatPace, GPXData } from '../utils/gpxParser'
 import { useDataContext } from '../contexts/DataContext'
+import { useError } from '../contexts/ErrorContext'
 import StravaConnectButton, { SyncProgressInfo } from '../components/StravaConnectButton'
 import { stravaService } from '../services/stravaService'
 import { convertStravaActivityToGPXData, validateStravaStreams } from '../utils/stravaConverter'
@@ -10,6 +11,7 @@ import { convertStravaActivityToGPXData, validateStravaStreams } from '../utils/
 const Upload = () => {
   const navigate = useNavigate()
   const { addParsedData } = useDataContext()
+  const { showError, showSuccess, showInfo, showWarning } = useError()
   const [dragActive, setDragActive] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [parsedData, setParsedData] = useState<GPXData[]>([])
@@ -69,12 +71,14 @@ const Upload = () => {
         await new Promise(resolve => setTimeout(resolve, 2000))
         
         if (activities.length === 0) {
-          alert('No running activities found in your Strava account. Make sure you have running activities synced to Strava.')
+          showError('No running activities found in your Strava account. Make sure you have running activities synced to Strava.')
         } else {
-          const message = `All ${activities.length} Strava activities are already synced!\n\nWould you like to view your runs on the Analysis page?`
-          if (confirm(message)) {
-            navigate('/analysis')
-          }
+          showInfo(`All ${activities.length} Strava activities are already synced! Navigate to the Analysis page to view them.`, 6000)
+          setTimeout(() => {
+            if (window.confirm('Would you like to view your runs on the Analysis page?')) {
+              navigate('/analysis')
+            }
+          }, 1000)
         }
         return
       }
@@ -200,7 +204,7 @@ const Upload = () => {
         console.warn('  - No activities fetched from Strava')
         console.warn('  - All activities failed validation/conversion')
         console.warn('  - Error occurred during stream fetching')
-        alert('No activities were successfully processed. Check console for details.')
+        showError('No activities were successfully processed. Check the browser console for details.')
         return
       }
       console.log('Converted Strava activities:', stravaData.map(a => ({ name: a.fileName, id: a.stravaId })))
@@ -215,7 +219,7 @@ const Upload = () => {
       
       if (finalNewActivities.length === 0) {
         console.log('No new activities to sync')
-        alert(`All processed activities are already synced! (Processed ${stravaData.length}, but all were duplicates)`)
+        showInfo(`All processed activities are already synced! (Processed ${stravaData.length}, but all were duplicates)`, 5000)
         return
       }
       
@@ -244,7 +248,7 @@ const Upload = () => {
       }
       
       const activitiesWithStreams = finalNewActivities.filter(a => a.tracks[0].points.length > 0).length
-      alert(`Successfully synced ${finalNewActivities.length} activities from Strava! ${activitiesWithStreams} have detailed GPS data. Check the Analysis page to view them.`)
+      showSuccess(`Successfully synced ${finalNewActivities.length} activities from Strava! ${activitiesWithStreams} have detailed GPS data.`, 6000)
       
       // Navigate using React Router instead of window.location for proper state preservation
       navigate('/analysis')
@@ -256,9 +260,9 @@ const Upload = () => {
       
       // Check for rate limit errors
       if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
-        alert('Rate limit exceeded! Strava allows 600 requests per 15 minutes. Please wait a few minutes and try again.')
+        showError('Rate limit exceeded! Strava allows 600 requests per 15 minutes. Please wait a few minutes and try again.', 8000)
       } else {
-        alert(`Failed to sync from Strava: ${error.message || 'Unknown error'}`)
+        showError(`Failed to sync from Strava: ${error.message || 'Unknown error'}. Please try again.`)
       }
     }
   }

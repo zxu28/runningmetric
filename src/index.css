@@ -112,4 +112,35 @@
   .border-organic-lg {
     border-radius: 3rem;
   }
+
+  /* Shimmer animation for loading skeletons */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
+    background: linear-gradient(
+      to right,
+      rgba(232, 217, 195, 0.3) 0%,
+      rgba(232, 217, 195, 0.5) 50%,
+      rgba(232, 217, 195, 0.3) 100%
+    );
+    background-size: 1000px 100%;
+  }
+
+  .dark .animate-shimmer {
+    background: linear-gradient(
+      to right,
+      rgba(64, 72, 49, 0.3) 0%,
+      rgba(64, 72, 49, 0.5) 50%,
+      rgba(64, 72, 49, 0.3) 100%
+    );
+    background-size: 1000px 100%;
+  }
 }

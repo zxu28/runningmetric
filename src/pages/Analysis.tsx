@@ -508,40 +508,40 @@ const Analysis = () => {
           <div className="bg-white/70 dark:bg-earth-800/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-2 mb-6 flex flex-wrap gap-2">
             <button
               onClick={() => setActiveTab('runs')}
-              className={`px-6 py-3 rounded-organic font-medium transition-all duration-300 ${
+              className={`px-6 py-3 rounded-organic font-medium transition-all duration-300 transform ${
                 activeTab === 'runs'
-                  ? 'bg-sage-600 text-white shadow-organic'
-                  : 'bg-earth-100 dark:bg-earth-700 text-earth-700 dark:text-earth-300 hover:bg-earth-200 dark:hover:bg-earth-600'
+                  ? 'bg-sage-600 text-white shadow-organic scale-105'
+                  : 'bg-earth-100 dark:bg-earth-700 text-earth-700 dark:text-earth-300 hover:bg-earth-200 dark:hover:bg-earth-600 hover:scale-105 hover:shadow-organic'
               }`}
             >
               Runs
             </button>
             <button
               onClick={() => setActiveTab('stats')}
-              className={`px-6 py-3 rounded-organic font-medium transition-all duration-300 ${
+              className={`px-6 py-3 rounded-organic font-medium transition-all duration-300 transform ${
                 activeTab === 'stats'
-                  ? 'bg-sage-600 text-white shadow-organic'
-                  : 'bg-earth-100 dark:bg-earth-700 text-earth-700 dark:text-earth-300 hover:bg-earth-200 dark:hover:bg-earth-600'
+                  ? 'bg-sage-600 text-white shadow-organic scale-105'
+                  : 'bg-earth-100 dark:bg-earth-700 text-earth-700 dark:text-earth-300 hover:bg-earth-200 dark:hover:bg-earth-600 hover:scale-105 hover:shadow-organic'
               }`}
             >
               Statistics
             </button>
             <button
               onClick={() => setActiveTab('achievements')}
-              className={`px-6 py-3 rounded-organic font-medium transition-all duration-300 ${
+              className={`px-6 py-3 rounded-organic font-medium transition-all duration-300 transform ${
                 activeTab === 'achievements'
-                  ? 'bg-sage-600 text-white shadow-organic'
-                  : 'bg-earth-100 dark:bg-earth-700 text-earth-700 dark:text-earth-300 hover:bg-earth-200 dark:hover:bg-earth-600'
+                  ? 'bg-sage-600 text-white shadow-organic scale-105'
+                  : 'bg-earth-100 dark:bg-earth-700 text-earth-700 dark:text-earth-300 hover:bg-earth-200 dark:hover:bg-earth-600 hover:scale-105 hover:shadow-organic'
               }`}
             >
               Achievements
             </button>
             <button
               onClick={() => setActiveTab('goals')}
-              className={`px-6 py-3 rounded-organic font-medium transition-all duration-300 ${
+              className={`px-6 py-3 rounded-organic font-medium transition-all duration-300 transform ${
                 activeTab === 'goals'
-                  ? 'bg-sage-600 text-white shadow-organic'
-                  : 'bg-earth-100 dark:bg-earth-700 text-earth-700 dark:text-earth-300 hover:bg-earth-200 dark:hover:bg-earth-600'
+                  ? 'bg-sage-600 text-white shadow-organic scale-105'
+                  : 'bg-earth-100 dark:bg-earth-700 text-earth-700 dark:text-earth-300 hover:bg-earth-200 dark:hover:bg-earth-600 hover:scale-105 hover:shadow-organic'
               }`}
             >
               Goals
@@ -563,8 +563,15 @@ const Analysis = () => {
           </AnimatePresence>
           
           {/* Tab Content */}
-          {activeTab === 'runs' && (
-            <>
+          <AnimatePresence mode="wait">
+            {activeTab === 'runs' && (
+              <motion.div
+                key="runs"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+              >
               {/* Search and Filter Bar */}
               <div className="bg-white/70 dark:bg-earth-800/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-6 mb-8">
             <div className="space-y-5">
@@ -1286,12 +1293,18 @@ const Analysis = () => {
               </div>
             </div>
           </motion.div>
-            </>
+            </motion.div>
           )}
 
           {/* Statistics Tab */}
           {activeTab === 'stats' && (
-            <>
+            <motion.div
+              key="stats"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+            >
               {parsedData.length === 0 ? (
                 <div className="bg-white/70 dark:bg-earth-800/70 backdrop-blur-sm rounded-organic-lg shadow-organic p-12 text-center">
                   <div className="text-6xl mb-4">📊</div>
@@ -1497,18 +1510,35 @@ const Analysis = () => {
                   </motion.div>
                 </>
               )}
-            </>
+            </motion.div>
           )}
 
           {/* Achievements Tab */}
           {activeTab === 'achievements' && (
-            <AchievementsPanel achievements={achievements} unlockedIds={unlockedIds} runs={parsedData} />
+            <motion.div
+              key="achievements"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+            >
+              <AchievementsPanel achievements={achievements} unlockedIds={unlockedIds} runs={parsedData} />
+            </motion.div>
           )}
 
           {/* Goals Tab */}
           {activeTab === 'goals' && (
-            <GoalTracker />
+            <motion.div
+              key="goals"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+            >
+              <GoalTracker />
+            </motion.div>
           )}
+          </AnimatePresence>
         </motion.div>
       </div>
 

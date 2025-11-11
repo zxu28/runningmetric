@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { stravaService, StravaTokens } from '../services/stravaService'
+import { useError } from '../contexts/ErrorContext'
 import SyncProgress from './SyncProgress'
 
 export interface SyncProgressInfo {
@@ -16,6 +17,7 @@ interface StravaConnectButtonProps {
 }
 
 const StravaConnectButton: React.FC<StravaConnectButtonProps> = ({ onSync }) => {
+  const { showError, showWarning } = useError()
   const [isConnected, setIsConnected] = useState(false)
   const [tokens, setTokens] = useState<StravaTokens | null>(null)
   const [isSyncing, setIsSyncing] = useState(false)
@@ -57,7 +59,7 @@ const StravaConnectButton: React.FC<StravaConnectButtonProps> = ({ onSync }) => 
       console.warn('⚠️ Sync timeout - clearing loading state after 10 minutes')
       setIsSyncing(false)
       setSyncProgress(null)
-      alert('Sync is taking longer than expected. Please check the console for errors or try again.')
+      showWarning('Sync is taking longer than expected. Please check the console for errors or try again.', 8000)
     }, 10 * 60 * 1000) // 10 minutes
     
     try {
@@ -70,7 +72,7 @@ const StravaConnectButton: React.FC<StravaConnectButtonProps> = ({ onSync }) => 
     } catch (error) {
       console.error('❌ Sync error:', error)
       setSyncProgress(null)
-      alert('Failed to sync activities. Please try again.')
+      showError('Failed to sync activities. Please try again.')
     } finally {
       clearTimeout(timeout)
       setIsSyncing(false)
