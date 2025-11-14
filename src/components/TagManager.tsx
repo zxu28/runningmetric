@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { GPXData } from '../utils/gpxParser'
 
@@ -27,16 +27,60 @@ const TagManager: React.FC<TagManagerProps> = ({ run, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [newTag, setNewTag] = useState('')
   const [showPredefined, setShowPredefined] = useState(false)
+  const [showCustomTags, setShowCustomTags] = useState(false)
+  const [customFilterTags, setCustomFilterTags] = useState<string[]>([])
   const [notes, setNotes] = useState(run.notes || '')
   const [showNotesEditor, setShowNotesEditor] = useState(false)
 
   const currentTags = run.tags || []
 
+  // Load custom filter tags from localStorage
+  const loadCustomTags = useCallback(() => {
+    try {
+      const stored = localStorage.getItem('customFilterTags')
+      if (stored) {
+        const tags = JSON.parse(stored)
+        if (Array.isArray(tags)) {
+          const normalizedTags = tags
+            .map(tag => typeof tag === 'string' ? tag.trim() : String(tag).trim())
+            .filter(tag => tag.length > 0)
+          setCustomFilterTags(normalizedTags)
+        }
+      } else {
+        setCustomFilterTags([])
+      }
+    } catch (error) {
+      console.error('Failed to load custom filter tags:', error)
+      setCustomFilterTags([])
+    }
+  }, [])
+
+  // Load custom tags on mount
+  useEffect(() => {
+    loadCustomTags()
+  }, [loadCustomTags])
+
+  // Refresh custom tags when editing starts
+  useEffect(() => {
+    if (isEditing) {
+      loadCustomTags()
+    }
+  }, [isEditing, loadCustomTags])
+
   const handleAddTag = (tag: string) => {
-    if (tag.trim() && !currentTags.includes(tag.trim())) {
+    const trimmedTag = tag.trim()
+    if (!trimmedTag) return
+    
+    // Case-insensitive check to see if tag already exists
+    const tagExists = currentTags.some(existingTag => 
+      existingTag.trim().toLowerCase() === trimmedTag.toLowerCase()
+    )
+    
+    if (!tagExists) {
+      // Use the trimmed tag as-is (preserve original casing)
       const updatedRun: GPXData = {
         ...run,
-        tags: [...currentTags, tag.trim()]
+        tags: [...currentTags, trimmedTag]
       }
       onUpdate(updatedRun)
       setNewTag('')
@@ -47,7 +91,9 @@ const TagManager: React.FC<TagManagerProps> = ({ run, onUpdate }) => {
   const handleRemoveTag = (tagToRemove: string) => {
     const updatedRun: GPXData = {
       ...run,
-      tags: currentTags.filter(tag => tag !== tagToRemove)
+      tags: currentTags.filter(tag => 
+        tag.trim().toLowerCase() !== tagToRemove.trim().toLowerCase()
+      )
     }
     onUpdate(updatedRun)
   }
@@ -139,7 +185,12 @@ const TagManager: React.FC<TagManagerProps> = ({ run, onUpdate }) => {
               </button>
               {showPredefined && (
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {PREDEFINED_TAGS.filter(tag => !currentTags.includes(tag)).map((tag) => (
+                  {PREDEFINED_TAGS.filter(tag => {
+                    // Case-insensitive check
+                    return !currentTags.some(existingTag => 
+                      existingTag.trim().toLowerCase() === tag.trim().toLowerCase()
+                    )
+                  }).map((tag) => (
                     <button
                       key={tag}
                       onClick={() => handleAddTag(tag)}
@@ -151,6 +202,37 @@ const TagManager: React.FC<TagManagerProps> = ({ run, onUpdate }) => {
                 </div>
               )}
             </div>
+
+            {/* Custom Filter Tags */}
+            {customFilterTags.length > 0 && (
+              <div>
+                <button
+                  onClick={() => setShowCustomTags(!showCustomTags)}
+                  className="text-xs text-gray-600 hover:text-gray-800 font-medium mb-2"
+                >
+                  {showCustomTags ? 'Hide' : 'Show'} Custom Tags ({customFilterTags.length})
+                </button>
+                {showCustomTags && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {customFilterTags.filter(tag => {
+                      // Case-insensitive check
+                      return !currentTags.some(existingTag => 
+                        existingTag.trim().toLowerCase() === tag.trim().toLowerCase()
+                      )
+                    }).map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => handleAddTag(tag)}
+                        className="px-2 py-1 text-xs rounded-full border border-purple-300 hover:border-purple-500 hover:bg-purple-50 transition-colors bg-purple-50"
+                        title="Custom filter tag"
+                      >
+                        + {tag}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Custom Tag Input */}
             <div className="flex gap-2">

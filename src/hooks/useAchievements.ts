@@ -42,6 +42,7 @@ export interface UseAchievementsReturn {
   newlyUnlocked: string[]
   checkAchievements: () => void
   clearNewlyUnlocked: () => void
+  dismissAchievement: (id: string) => void
   unlockAchievement: (id: string) => void
 }
 
@@ -112,11 +113,18 @@ export function useAchievements(bestEfforts: PersonalRecords): UseAchievementsRe
       // Only add to newlyUnlocked if they haven't been shown before
       const trulyNew = newUnlocked.filter(id => !shownAchievements.has(id))
       if (trulyNew.length > 0) {
-        setNewlyUnlocked(trulyNew)
-        // Mark these as shown
+        // Mark these as shown IMMEDIATELY before adding to newlyUnlocked
+        // This prevents them from being added again if checkForAchievements runs again
         const updatedShown = new Set([...shownAchievements, ...trulyNew])
         setShownAchievements(updatedShown)
         saveShownAchievements(updatedShown)
+        
+        // Only add to newlyUnlocked if they're not already in the array
+        setNewlyUnlocked(prev => {
+          const existing = new Set(prev)
+          const toAdd = trulyNew.filter(id => !existing.has(id))
+          return toAdd.length > 0 ? [...prev, ...toAdd] : prev
+        })
       }
     }
   }, [parsedData, stories, bestEfforts, unlockedIds, shownAchievements, saveShownAchievements])
@@ -146,7 +154,15 @@ export function useAchievements(bestEfforts: PersonalRecords): UseAchievementsRe
   }, [unlockedIds, shownAchievements, saveShownAchievements])
 
   const clearNewlyUnlocked = useCallback(() => {
+    // Clear the newly unlocked array - achievements are already marked as shown
+    // so they won't appear again even if checkForAchievements runs
     setNewlyUnlocked([])
+  }, [])
+
+  const dismissAchievement = useCallback((id: string) => {
+    // Remove a specific achievement from newlyUnlocked
+    // Achievements are already marked as shown, so they won't reappear
+    setNewlyUnlocked(prev => prev.filter(achievementId => achievementId !== id))
   }, [])
 
   return {
@@ -155,6 +171,7 @@ export function useAchievements(bestEfforts: PersonalRecords): UseAchievementsRe
     newlyUnlocked,
     checkAchievements: checkForAchievements,
     clearNewlyUnlocked,
+    dismissAchievement,
     unlockAchievement
   }
 }

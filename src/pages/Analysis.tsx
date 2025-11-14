@@ -8,7 +8,6 @@ import { formatDistance, formatPace, GPXData } from '../utils/gpxParser'
 import { getMostRecentRun } from '../utils/runHelpers'
 import { useBestEfforts } from '../hooks/useBestEfforts'
 import { useAchievements } from '../hooks/useAchievements'
-import { getAchievementById } from '../utils/achievements'
 import { exportDataAsJSON, exportRunsAsCSV } from '../utils/dataExport'
 import { getWeeklyTrends, getMonthlyTrends, TimePeriod } from '../utils/trendAnalysis'
 import PacePerMileChart from '../components/PacePerMileChart'
@@ -19,7 +18,6 @@ import RunDetails from '../components/RunDetails'
 import BestEffortsGrid from '../components/BestEffortsGrid'
 import PRBadge from '../components/PRBadge'
 import RunComparison from '../components/RunComparison'
-import AchievementPopup from '../components/AchievementPopup'
 import AchievementsPanel from '../components/AchievementsPanel'
 import GoalTracker from '../components/GoalTracker'
 import ActivityHeatmap from '../components/ActivityHeatmap'
@@ -97,7 +95,7 @@ const Analysis = () => {
   const { bestEfforts, newPRs, clearNewPRs } = useBestEfforts(parsedData)
   
   // Use achievements hook
-  const { newlyUnlocked, clearNewlyUnlocked, unlockedIds, achievements } = useAchievements(bestEfforts)
+  const { unlockedIds, achievements } = useAchievements(bestEfforts)
   
   // Get stories and goals for export
   const { stories } = useStoriesContext()
@@ -547,20 +545,6 @@ const Analysis = () => {
               Goals
             </button>
           </div>
-          
-          {/* Achievement Popups */}
-          <AnimatePresence>
-            {newlyUnlocked.map(achievementId => {
-              const achievement = getAchievementById(achievementId)
-              return achievement ? (
-                <AchievementPopup
-                  key={achievementId}
-                  achievement={achievement}
-                  onDismiss={clearNewlyUnlocked}
-                />
-              ) : null
-            })}
-          </AnimatePresence>
           
           {/* Tab Content */}
           <AnimatePresence mode="wait">
@@ -1096,12 +1080,12 @@ const Analysis = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.05 }}
-                className="border-2 border-earth-200 rounded-organic-lg bg-white/70 backdrop-blur-sm shadow-organic hover:shadow-organic-lg overflow-hidden transition-all duration-300"
+                className="border-2 border-earth-200 rounded-organic-lg bg-white/70 backdrop-blur-sm shadow-organic hover:shadow-organic-lg overflow-hidden transition-shadow duration-200"
               >
                 {/* Header - always visible */}
                 <div 
                   onClick={() => toggleRun(originalIndex)} 
-                  className="cursor-pointer p-6 hover:bg-earth-50/50 transition-all duration-300"
+                  className="cursor-pointer p-6 hover:bg-earth-50/50 transition-colors duration-200"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">

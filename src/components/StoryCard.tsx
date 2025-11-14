@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { RunningStory, MOOD_TAGS } from '../utils/storyTypes'
 import { GPXData } from '../utils/gpxParser'
@@ -18,9 +18,18 @@ interface StoryCardProps {
 
 const StoryCard: React.FC<StoryCardProps> = ({ story, runs, onView, onEdit, onDelete }) => {
   const { stories } = useStoriesContext()
+  const mapContainerRef = useRef<HTMLDivElement>(null)
   
   // Get runs for this story
   const storyRuns = runs.filter(run => story.runIds.includes(getRunId(run)))
+  
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't open story if clicking on the map area
+    if (mapContainerRef.current && mapContainerRef.current.contains(e.target as Node)) {
+      return
+    }
+    onView()
+  }
 
   // Get top insight
   const topInsight = useMemo(() => {
@@ -54,8 +63,8 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, runs, onView, onEdit, onDe
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
-      className="bg-white/70 backdrop-blur-sm rounded-organic-lg shadow-organic hover:shadow-organic-lg border-2 border-earth-200 overflow-hidden transition-all duration-300 cursor-pointer"
-      onClick={onView}
+      className="bg-white/70 backdrop-blur-sm rounded-organic-lg shadow-organic hover:shadow-organic-lg border-2 border-earth-200 overflow-hidden transition-shadow duration-200 cursor-pointer"
+      onClick={handleCardClick}
     >
       {/* Header */}
       <div className="p-6">
@@ -115,7 +124,11 @@ const StoryCard: React.FC<StoryCardProps> = ({ story, runs, onView, onEdit, onDe
 
         {/* Map Preview */}
         {storyRuns.length > 0 && (
-          <div className="mb-4 overflow-hidden rounded-organic">
+          <div 
+            ref={mapContainerRef}
+            className="mb-4 overflow-hidden rounded-organic"
+            onClick={(e) => e.stopPropagation()}
+          >
             <StoryMap 
               runs={storyRuns} 
               colorMode="date" 

@@ -8,6 +8,7 @@ const Home = () => {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
           className="absolute top-20 left-10 w-64 h-64 bg-sage-200/30 rounded-full blur-3xl"
+          style={{ willChange: 'transform', transform: 'translateZ(0)' }}
           animate={{
             y: [0, -20, 0],
             rotate: [0, 5, 0],
@@ -20,6 +21,7 @@ const Home = () => {
         />
         <motion.div
           className="absolute bottom-20 right-10 w-80 h-80 bg-earth-200/30 rounded-full blur-3xl"
+          style={{ willChange: 'transform', transform: 'translateZ(0)' }}
           animate={{
             y: [0, -20, 0],
             rotate: [0, 5, 0],
@@ -33,6 +35,7 @@ const Home = () => {
         />
         <motion.div
           className="absolute top-1/2 left-1/3 w-48 h-48 bg-moss-200/20 rounded-full blur-2xl"
+          style={{ willChange: 'transform', transform: 'translateZ(0)' }}
           animate={{
             y: [0, -10, 0],
           }}
@@ -77,7 +80,7 @@ const Home = () => {
           >
             <Link
               to="/upload"
-              className="inline-flex items-center px-10 py-5 text-lg font-medium rounded-organic-lg text-white bg-sage-600 hover:bg-sage-700 shadow-organic-lg hover:shadow-organic transform hover:scale-105 transition-all duration-300"
+              className="inline-flex items-center px-10 py-5 text-lg font-medium rounded-organic-lg text-white bg-sage-600 hover:bg-sage-700 shadow-organic-lg hover:shadow-organic transform hover:scale-105 transition-colors transition-shadow duration-200"
             >
               Get Started
               <svg className="ml-3 -mr-1 w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -93,7 +96,7 @@ const Home = () => {
             className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto"
           >
             <motion.div 
-              className="bg-white/70 backdrop-blur-sm rounded-organic-lg p-8 shadow-organic hover:shadow-organic-lg transform hover:-translate-y-2 transition-all duration-500"
+              className="bg-white/70 backdrop-blur-sm rounded-organic-lg p-8 shadow-organic hover:shadow-organic-lg transform hover:-translate-y-2 transition-shadow duration-200"
               whileHover={{ scale: 1.02 }}
             >
               <div className="text-4xl mb-4 animate-float">📁</div>
@@ -102,7 +105,7 @@ const Home = () => {
             </motion.div>
             
             <motion.div 
-              className="bg-white/70 backdrop-blur-sm rounded-organic-lg p-8 shadow-organic hover:shadow-organic-lg transform hover:-translate-y-2 transition-all duration-500"
+              className="bg-white/70 backdrop-blur-sm rounded-organic-lg p-8 shadow-organic hover:shadow-organic-lg transform hover:-translate-y-2 transition-shadow duration-200"
               whileHover={{ scale: 1.02 }}
               style={{ animationDelay: '0.1s' }}
             >
@@ -112,7 +115,7 @@ const Home = () => {
             </motion.div>
             
             <motion.div 
-              className="bg-white/70 backdrop-blur-sm rounded-organic-lg p-8 shadow-organic hover:shadow-organic-lg transform hover:-translate-y-2 transition-all duration-500"
+              className="bg-white/70 backdrop-blur-sm rounded-organic-lg p-8 shadow-organic hover:shadow-organic-lg transform hover:-translate-y-2 transition-shadow duration-200"
               whileHover={{ scale: 1.02 }}
               style={{ animationDelay: '0.2s' }}
             >

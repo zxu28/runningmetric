@@ -110,21 +110,22 @@ const StoryModal: React.FC<StoryModalProps> = ({ isOpen, onClose, onSubmit, exis
   const handleTemplateSelect = (template: StoryTemplate) => {
     setSelectedTemplateId(template.id)
     
-    // Pre-fill form fields with template suggestions
-    if (template.suggestedTitle && !title) {
+    // Always update form fields with template suggestions when switching templates
+    // This ensures that switching from one template to another properly updates all fields
+    if (template.suggestedTitle) {
       setTitle(template.suggestedTitle)
     }
-    if (template.suggestedDescription && !description) {
-      setDescription(template.suggestedDescription)
+    if (template.suggestedDescription !== undefined) {
+      setDescription(template.suggestedDescription || '')
     }
-    if (template.suggestedMoodTags.length > 0 && selectedMoodTags.length === 0) {
+    if (template.suggestedMoodTags.length > 0) {
       setSelectedMoodTags(template.suggestedMoodTags)
     }
-    if (template.suggestedWeatherNotes && !weatherNotes) {
-      setWeatherNotes(template.suggestedWeatherNotes)
+    if (template.suggestedWeatherNotes !== undefined) {
+      setWeatherNotes(template.suggestedWeatherNotes || '')
     }
-    if (template.suggestedEmotionalNotes && !emotionalNotes) {
-      setEmotionalNotes(template.suggestedEmotionalNotes)
+    if (template.suggestedEmotionalNotes !== undefined) {
+      setEmotionalNotes(template.suggestedEmotionalNotes || '')
     }
   }
 

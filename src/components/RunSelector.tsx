@@ -198,6 +198,7 @@ const RunSelector: React.FC<RunSelectorProps> = ({ runs, selectedRunIds, onSelec
                 return (
                   <button
                     key={tag}
+                    type="button"
                     onClick={() => toggleTag(tag)}
                     className={`px-3 py-1.5 text-xs rounded-full border-2 transition-all duration-300 ${
                       isSelected
@@ -225,6 +226,7 @@ const RunSelector: React.FC<RunSelectorProps> = ({ runs, selectedRunIds, onSelec
                 return (
                   <button
                     key={year}
+                    type="button"
                     onClick={() => toggleYear(year)}
                     className={`px-3 py-1.5 text-xs rounded-full border-2 transition-all duration-300 ${
                       isSelected
@@ -253,6 +255,7 @@ const RunSelector: React.FC<RunSelectorProps> = ({ runs, selectedRunIds, onSelec
                 return (
                   <button
                     key={monthKey}
+                    type="button"
                     onClick={() => toggleMonth(monthKey)}
                     className={`px-3 py-1.5 text-xs rounded-full border-2 transition-all duration-300 ${
                       isSelected
@@ -271,6 +274,7 @@ const RunSelector: React.FC<RunSelectorProps> = ({ runs, selectedRunIds, onSelec
         {/* Clear Filters */}
         {(selectedTags.size > 0 || selectedYears.size > 0 || selectedMonths.size > 0) && (
           <button
+            type="button"
             onClick={() => {
               setSelectedTags(new Set())
               setSelectedYears(new Set())
@@ -286,6 +290,7 @@ const RunSelector: React.FC<RunSelectorProps> = ({ runs, selectedRunIds, onSelec
       {/* Select All / Deselect All */}
       <div className="flex items-center justify-between">
         <button
+          type="button"
           onClick={handleSelectAll}
           className="text-sm text-sage-600 dark:text-sage-400 hover:text-sage-700 dark:hover:text-sage-300 px-3 py-1 rounded-full hover:bg-sage-50 dark:hover:bg-sage-900/30 transition-all duration-300"
         >
@@ -316,6 +321,7 @@ const RunSelector: React.FC<RunSelectorProps> = ({ runs, selectedRunIds, onSelec
             </p>
             {(selectedTags.size > 0 || selectedYears.size > 0 || selectedMonths.size > 0 || searchQuery) && (
               <button
+                type="button"
                 onClick={() => {
                   setSearchQuery('')
                   setSelectedTags(new Set())
@@ -341,7 +347,7 @@ const RunSelector: React.FC<RunSelectorProps> = ({ runs, selectedRunIds, onSelec
                 transition={{ delay: index * 0.02 }}
               >
                 <label
-                  className={`flex items-start gap-3 p-3 rounded-organic cursor-pointer transition-all duration-300 ${
+                  className={`flex items-start gap-3 p-3 rounded-organic cursor-pointer transition-colors duration-200 ${
                     isSelected
                       ? 'bg-sage-100 dark:bg-sage-800 border-2 border-sage-400 dark:border-sage-600 shadow-organic'
                       : 'bg-earth-50/50 dark:bg-earth-700/50 border-2 border-earth-200 dark:border-earth-600 hover:border-sage-300 dark:hover:border-sage-500 hover:bg-earth-50 dark:hover:bg-earth-700'

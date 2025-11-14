@@ -15,7 +15,7 @@ const AchievementBadge: React.FC<AchievementBadgeProps> = ({
     <div
       onClick={onClick}
       className={`
-        relative p-4 rounded-organic-lg border-2 transition-all duration-300
+        relative p-4 rounded-organic-lg border-2 transition-colors transition-shadow duration-200
         ${unlocked 
           ? 'bg-white/70 backdrop-blur-sm border-sage-300 shadow-organic cursor-pointer hover:shadow-organic-lg hover:scale-105 active:scale-95' 
           : 'bg-earth-100/50 border-earth-200 opacity-60 cursor-pointer hover:opacity-80'
