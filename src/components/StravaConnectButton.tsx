@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { stravaService, StravaTokens } from '../services/stravaService'
 import { useError } from '../contexts/ErrorContext'
+import { useDataContext } from '../contexts/DataContext'
 import SyncProgress from './SyncProgress'
 
 export interface SyncProgressInfo {
@@ -17,7 +18,8 @@ interface StravaConnectButtonProps {
 }
 
 const StravaConnectButton: React.FC<StravaConnectButtonProps> = ({ onSync }) => {
-  const { showError, showWarning } = useError()
+  const { showError, showWarning, showInfo } = useError()
+  const { removeStravaData, parsedData } = useDataContext()
   const [isConnected, setIsConnected] = useState(false)
   const [tokens, setTokens] = useState<StravaTokens | null>(null)
   const [isSyncing, setIsSyncing] = useState(false)
@@ -37,11 +39,31 @@ const StravaConnectButton: React.FC<StravaConnectButtonProps> = ({ onSync }) => 
   }
 
   const handleDisconnect = () => {
-    if (confirm('Are you sure you want to disconnect from Strava?')) {
-      stravaService.disconnect()
-      setIsConnected(false)
-      setTokens(null)
+    const stravaRunCount = parsedData.filter(run => run.source === 'strava').length
+    
+    if (!confirm('Are you sure you want to disconnect from Strava?')) {
+      return
     }
+    
+    // Ask if they want to remove Strava data too
+    if (stravaRunCount > 0) {
+      const removeData = confirm(
+        `You have ${stravaRunCount} Strava activity/activities synced.\n\n` +
+        `Do you also want to remove these activities from your data?\n\n` +
+        `Click OK to remove Strava data, or Cancel to keep it.`
+      )
+      
+      if (removeData) {
+        removeStravaData()
+        showInfo('Disconnected from Strava and removed synced activities.', 4000)
+      } else {
+        showInfo('Disconnected from Strava. Your synced activities are still available.', 4000)
+      }
+    }
+    
+    stravaService.disconnect()
+    setIsConnected(false)
+    setTokens(null)
   }
 
   const handleSync = async () => {

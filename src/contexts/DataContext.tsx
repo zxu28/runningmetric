@@ -11,6 +11,7 @@ interface DataContextType {
   clearData: () => void
   clearAllData: () => void
   removeDuplicates: () => void
+  removeStravaData: () => void
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined)
@@ -356,6 +357,28 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     }
   }
 
+  // Remove all Strava-synced data
+  const removeStravaData = () => {
+    setParsedData(prevData => {
+      const stravaCount = prevData.filter(run => run.source === 'strava').length
+      const filteredData = prevData.filter(run => run.source !== 'strava')
+      
+      // Save to localStorage
+      try {
+        localStorage.setItem('runningData', JSON.stringify(filteredData))
+        console.log(`Removed ${stravaCount} Strava activities. ${filteredData.length} runs remaining.`)
+        if (stravaCount > 0) {
+          showInfo(`Removed ${stravaCount} Strava activity/activities. Your GPX files are still available.`, 5000)
+        }
+      } catch (error) {
+        console.error('Failed to save after removing Strava data:', error)
+        showError('Failed to remove Strava data. Please try again.')
+      }
+      
+      return filteredData
+    })
+  }
+
   const value: DataContextType = {
     parsedData,
     setParsedData,
@@ -364,7 +387,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     deleteRun,
     clearData,
     clearAllData,
-    removeDuplicates
+    removeDuplicates,
+    removeStravaData
   }
 
   return (
